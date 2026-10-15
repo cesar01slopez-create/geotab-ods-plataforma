@@ -183,7 +183,6 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-const upload = multer({ dest: 'uploads/' });
 
 // 1. Ruta para Carga Masiva de Servicios vía Excel
 app.post('/api/servicios/masivo', upload.single('file'), (req, res) => {
@@ -255,7 +254,6 @@ app.post('/api/servicios', express.json(), (req, res) => {
 });
 
 // 3. Modificar la Carga Masiva para que guarde los datos en la lista autónoma
-app.post('/api/servicios/masivo', upload.single('file'), (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, error: "No se subió ningún archivo Excel." });
