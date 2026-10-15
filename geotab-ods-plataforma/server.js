@@ -16,7 +16,7 @@ app.use(cors());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'clave_secreta_super_segura_geotab';
 
-// Lista de usuarios dinámica (ahora permite registrar nuevos desde el panel)
+// Lista de usuarios dinámica
 let usuariosRegistrados = [
     { id: 1, usuario: 'cesar.admin', passwordHash: bcrypt.hashSync('admin123', 8), rol: 'admin' },
     { id: 2, usuario: 'tecnico.campo', passwordHash: bcrypt.hashSync('tec123', 8), rol: 'tecnico' }
@@ -27,6 +27,10 @@ let historialInstalaciones = [
     { fecha: '2026-10-13', eco: 'ECO-102', estatus: 'Óptimo', arnes: '16 Pines' }
 ];
 
+// Almacenamiento autónomo en la memoria del servidor
+let listaServicios = [
+    { id: 1, folio: "ODS-1001", unidad: "Unit-01", operador: "Cesar", detalle: "Mantenimiento preventivo", salud: "Óptima", kpi: "98%", fecha: "2026-10-15" }
+];
 
 // --- RUTA 1: LOGIN ---
 app.post('/api/login', (req, res) => {
@@ -55,7 +59,7 @@ function verificarAdmin(req, res, next) {
     });
 }
 
-// --- RUTA NUEVA: CREAR USUARIO DESDE EL PANEL (Solo Admin) ---
+// --- CREAR USUARIO DESDE EL PANEL (Solo Admin) ---
 app.post('/api/usuarios/crear', verificarAdmin, (req, res) => {
     const { nuevoUsuario, nuevaPassword, rol } = req.body;
 
@@ -63,7 +67,6 @@ app.post('/api/usuarios/crear', verificarAdmin, (req, res) => {
         return res.status(400).json({ exito: false, error: 'Faltan datos obligatorios para crear el usuario.' });
     }
 
-    // Verificar si el usuario ya existe
     const existe = usuariosRegistrados.find(u => u.usuario === nuevoUsuario);
     if (existe) {
         return res.status(400).json({ exito: false, error: 'El nombre de usuario ya está registrado.' });
@@ -172,67 +175,11 @@ app.get('/api/kpis', verificarAdmin, (req, res) => {
     });
 });
 
-app.use('/public', express.static(path.join(__dirname, 'public')));
-
-const PORT = process.env.PORT || 3000;
-// Servir la carpeta 'public' (donde está index.html)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Ruta principal que entrega la interfaz visual
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-
-// 1. Ruta para Carga Masiva de Servicios vía Excel
-app.post('/api/servicios/masivo', upload.single('file'), (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ success: false, error: "No se subió ningún archivo Excel." });
-        }
-        const workbook = xlsx.readFile(req.file.path);
-        const sheetName = workbook.SheetNames[0];
-        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-        
-        console.log(`[EXCEL MASIVO] Se procesaron ${data.length} registros.`);
-        res.json({ success: true, message: `¡Carga masiva exitosa! Se procesaron ${data.length} servicios correctamente.` });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// 2. Ruta para Exportar Datos, Salud y KPIs a Excel
-app.get('/api/exportar/excel', (req, res) => {
-    try {
-        const datosSaludYKPIs = [
-            { Folio: "ODS-1001", Unidad: "Unit-01", Operador: "Cesar", EstadoSalud: "Óptima", CumplimientoKPI: "98%", Fecha: "2026-10-15" }
-        ];
-
-        const worksheet = xlsx.utils.json_to_sheet(datosSaludYKPIs);
-        const workbook = xlsx.utils.book_new();
-        xlsx.utils.book_append_sheet(workbook, worksheet, "Salud_y_KPIs");
-
-        const buffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'buffer' });
-        
-        res.setHeader('Content-Disposition', 'attachment; filename="Reporte_Salud_KPIs_Geotab.xlsx"');
-        res.type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.send(buffer);
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// Almacenamiento autónomo en la memoria del servidor
-let listaServicios = [
-    { id: 1, folio: "ODS-1001", unidad: "Unit-01", operador: "Cesar", detalle: "Mantenimiento preventivo", salud: "Óptima", kpi: "98%", fecha: "2026-10-15" }
-];
-
-// 1. Obtener todos los servicios registrados
+// --- APIS AUTÓNOMAS DE SERVICIOS ---
 app.get('/api/servicios', (req, res) => {
     res.json({ success: true, servicios: listaServicios });
 });
 
-// 2. Registrar un servicio de forma manual y autónoma desde la plataforma
 app.post('/api/servicios', express.json(), (req, res) => {
     try {
         const nuevoServicio = {
@@ -253,7 +200,8 @@ app.post('/api/servicios', express.json(), (req, res) => {
     }
 });
 
-// 3. Modificar la Carga Masiva para que guarde los datos en la lista autónoma
+// Carga Masiva con Excel integrada a la memoria autónoma
+app.post('/api/servicios/masivo', upload.single('file'), (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ success: false, error: "No se subió ningún archivo Excel." });
@@ -262,7 +210,6 @@ app.post('/api/servicios', express.json(), (req, res) => {
         const sheetName = workbook.SheetNames[0];
         const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
         
-        // Agregar cada fila del Excel a nuestra lista autónoma
         data.forEach((item, index) => {
             listaServicios.push({
                 id: listaServicios.length + 1,
@@ -276,13 +223,14 @@ app.post('/api/servicios', express.json(), (req, res) => {
             });
         });
 
+        fs.unlinkSync(req.file.path);
         res.json({ success: true, message: `¡Carga masiva exitosa! Se añadieron ${data.length} servicios al sistema autónomo.` });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// 4. Hacer que el reporte de Excel descargable use la información real autónoma
+// Exportar datos y KPIs a Excel
 app.get('/api/exportar/excel', (req, res) => {
     try {
         const worksheet = xlsx.utils.json_to_sheet(listaServicios);
@@ -299,4 +247,13 @@ app.get('/api/exportar/excel', (req, res) => {
     }
 });
 
+// Archivos estáticos y ruta principal
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor activo en el puerto ${PORT}`));
