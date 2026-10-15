@@ -175,4 +175,12 @@ app.get('/api/kpis', verificarAdmin, (req, res) => {
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 3000;
+// Servir la carpeta 'public' (donde está index.html)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Ruta principal que entrega la interfaz visual
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.listen(PORT, () => console.log(`Servidor activo en el puerto ${PORT}`));
