@@ -183,7 +183,6 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-const xlsx = require('xlsx');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 
