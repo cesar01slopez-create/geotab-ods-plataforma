@@ -322,5 +322,64 @@ document.getElementById('formMasivo').addEventListener('submit', async (e) => {
         </div>
     </div>
 </div>
+<!-- Panel de Control Autónomo de Servicios -->
+<div class="bg-white p-6 rounded-lg shadow-md mb-6">
+    <h3 class="text-lg font-bold text-gray-800 mb-4">Registro y Control Autónomo de Servicios</h3>
+    
+    <!-- Formulario para agregar un servicio manual -->
+    <form id="formNuevoServicio" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <input type="text" id="inputUnidad" placeholder="Unidad (Ej. Unit-02)" class="border p-2 rounded text-sm" required>
+        <input type="text" id="inputOperador" placeholder="Nombre del Operador" class="border p-2 rounded text-sm" required>
+        <input type="text" id="inputDetalle" placeholder="Diagnóstico / Actividad" class="border p-2 rounded text-sm" required>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-semibold col-span-full">
+            ➕ Registrar Nuevo Servicio en el Sistema
+        </button>
+    </form>
+</div>
+
+<script>
+// Función para registrar servicio de forma autónoma
+document.getElementById('formNuevoServicio').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const datos = {
+        unidad: document.getElementById('inputUnidad').value,
+        operador: document.getElementById('inputOperador').value,
+        detalle: document.getElementById('inputDetalle').value
+    };
+
+    try {
+        const response = await fetch('/api/servicios', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        const result = await response.json();
+        if (result.success) {
+            alert(result.message);
+            document.getElementById('formNuevoServicio').reset();
+            cargarServicios(); // Actualizar tabla si la tienes
+        } else {
+            alert('Error al registrar.');
+        }
+    } catch (err) {
+        console.error(err);
+    }
+});
+
+// Función para consultar los servicios autónomos del servidor
+async function cargarServicios() {
+    try {
+        const response = await fetch('/api/servicios');
+        const data = await response.json();
+        if(data.success) {
+            console.log("Servicios autónomos cargados:", data.servicios);
+            // Aquí puedes pintar los datos en tu tabla HTML existente
+        }
+    } catch (err) {
+        console.error("Error cargando servicios", err);
+    }
+}
+cargarServicios();
+</script>
 </body>
 </html>
