@@ -460,7 +460,7 @@
             }
         }
 
-        async function enviarODSCompleto(e) {
+async function enviarODSCompleto(e) {
             e.preventDefault();
             const form = document.getElementById('form-ods-completo');
             const formData = new FormData(form);
@@ -474,16 +474,25 @@
             try {
                 const res = await fetch('/api/generar-ods', { method: 'POST', body: formData });
                 const data = await res.json();
-                if(data.exito) {
+                
+                if(data.exito && data.descargaUrl) {
                     resultado.classList.remove('hidden');
                     link.href = data.descargaUrl;
-                    window.open(data.descargaUrl, '_blank');
+                    
+                    // Forzar la descarga directa mediante un elemento temporal en el DOM
+                    const downloadAnchor = document.createElement('a');
+                    downloadAnchor.href = data.descargaUrl;
+                    downloadAnchor.download = `ODS_${document.getElementById('input-folio').value || 'Institucional'}.docx`;
+                    document.body.appendChild(downloadAnchor);
+                    downloadAnchor.click();
+                    document.body.removeChild(downloadAnchor);
+
                     form.reset();
                 } else {
-                    alert('Error: ' + data.error);
+                    alert('Error: ' + (data.error || 'No se pudo generar el documento.'));
                 }
             } catch(err) {
-                alert('Error procesando la ODS.');
+                alert('Error de conexión al procesar la ODS.');
             } finally {
                 btn.disabled = false;
                 btn.textContent = "Generar y Descargar ODS Institucional";
