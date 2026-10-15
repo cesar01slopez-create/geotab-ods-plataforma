@@ -26,7 +26,6 @@ let historialInstalaciones = [
     { fecha: '2026-10-13', eco: 'ECO-102', estatus: 'Óptimo', arnes: '16 Pines' }
 ];
 
-const upload = multer({ storage: multer.memoryStorage() });
 
 // --- RUTA 1: LOGIN ---
 app.post('/api/login', (req, res) => {
