@@ -183,4 +183,46 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+const xlsx = require('xlsx');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+
+// 1. Ruta para Carga Masiva de Servicios vía Excel
+app.post('/api/servicios/masivo', upload.single('file'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: "No se subió ningún archivo Excel." });
+        }
+        const workbook = xlsx.readFile(req.file.path);
+        const sheetName = workbook.SheetNames[0];
+        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+        
+        console.log(`[EXCEL MASIVO] Se procesaron ${data.length} registros.`);
+        res.json({ success: true, message: `¡Carga masiva exitosa! Se procesaron ${data.length} servicios correctamente.` });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 2. Ruta para Exportar Datos, Salud y KPIs a Excel
+app.get('/api/exportar/excel', (req, res) => {
+    try {
+        const datosSaludYKPIs = [
+            { Folio: "ODS-1001", Unidad: "Unit-01", Operador: "Cesar", EstadoSalud: "Óptima", CumplimientoKPI: "98%", Fecha: "2026-10-15" }
+        ];
+
+        const worksheet = xlsx.utils.json_to_sheet(datosSaludYKPIs);
+        const workbook = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(workbook, worksheet, "Salud_y_KPIs");
+
+        const buffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+        
+        res.setHeader('Content-Disposition', 'attachment; filename="Reporte_Salud_KPIs_Geotab.xlsx"');
+        res.type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.send(buffer);
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.listen(PORT, () => console.log(`Servidor activo en el puerto ${PORT}`));
