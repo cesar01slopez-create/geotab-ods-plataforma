@@ -15,11 +15,12 @@ const t = v => String(v ?? '').trim(), nm = v => t(v).toUpperCase();
 
 // Cuenta del coordinador: si defines ADMIN_PASS, SIEMPRE manda sobre lo guardado (sirve para recuperar el acceso)
 const ADMIN_USER = t(process.env.ADMIN_USER || 'cesar.admin').replace(/^["']|["']$/g, '').toLowerCase();
-const ADMIN_PASS = t(process.env.ADMIN_PASS).replace(/^["']|["']$/g, '');   // quita espacios y comillas pegadas por error
+const ADMIN_PASS = t(process.env.ADMIN_PASS || 'admin123').replace(/^["']|["']$/g, '');   // quita espacios y comillas pegadas por error
 if (ADMIN_PASS) {
   const hash = bcrypt.hashSync(ADMIN_PASS, 10), c = db.usuarios.find(u => u.usuario === ADMIN_USER);
   if (c) { c.hash = hash; c.rol = 'coord'; } else db.usuarios.push({ usuario: ADMIN_USER, nombre: 'Cesar Sanchez', rol: 'coord', hash });
   save(); console.log('Coordinador listo. Usuario:', ADMIN_USER);
+  if (!process.env.ADMIN_PASS) console.log('AVISO: no definiste ADMIN_PASS; la contraseña es admin123. Defínela en las variables de entorno para cambiarla.');
 } else if (!db.usuarios.some(u => u.rol === 'coord')) {
   const pass = crypto.randomBytes(5).toString('hex');
   db.usuarios.push({ usuario: ADMIN_USER, nombre: 'Cesar Sanchez', rol: 'coord', hash: bcrypt.hashSync(pass, 10) });
@@ -36,6 +37,8 @@ const app = express();
 app.use(cors()); app.use(express.json({ limit: '2mb' }));
 app.use('/ods', express.static(ODS));
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/api/version', (req, res) => res.json({ version: '3.2' }));   // para comprobar que corre el servidor nuevo
 
 // ---------- Sesión ----------
 app.post('/api/login', (req, res) => {
