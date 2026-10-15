@@ -85,7 +85,7 @@ app.post('/api/usuarios/crear', verificarAdmin, (req, res) => {
     res.json({ exito: true, mensaje: `Usuario '${nuevoUsuario}' creado correctamente como ${rol}.` });
 });
 
-// --- RUTA 2: GENERAR ODS (Blindada y Autónoma) ---
+// --- RUTA 2: GENERAR ODS (Formato PDF Autónomo y Profesional) ---
 app.post('/api/generar-ods', upload.fields([
     { name: 'foto_adherible', maxCount: 1 },
     { name: 'foto_imei_camara', maxCount: 1 },
@@ -100,52 +100,57 @@ app.post('/api/generar-ods', upload.fields([
         const publicDir = path.join(__dirname, 'public');
         if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir);
 
-        const outputFilename = `ODS_${folioAcuerdo}_${Date.now()}.docx`;
+        const outputFilename = `ODS_${folioAcuerdo}_${Date.now()}.pdf`;
         const outputPath = path.join(publicDir, outputFilename);
 
-        const templatePath = path.join(__dirname, 'plantilla_base.docx');
+        // Generar un PDF estructurado, limpio y profesional directamente
+        const PDFDocument = require('pdfkit');
+        const doc = new PDFDocument({ margin: 50 });
+        const stream = fs.createWriteStream(outputPath);
+        doc.pipe(stream);
 
-        if (fs.existsSync(templatePath)) {
-            // Si existe la plantilla Word, la procesamos con Docxtemplater
-            const content = fs.readFileSync(templatePath, 'binary');
-            const zip = new PizZip(content);
-            const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+        // Encabezado institucional
+        doc.fontSize(20).fillColor('#1E3A8A').text('GEOTAB ODS - ORDEN DE SERVICIO', { align: 'center' });
+        doc.fontSize(10.5).fillColor('#4B5563').text('Plataforma Autónoma de Gestión de Flota y Mantenimiento', { align: 'center' });
+        doc.moveDown(1.5);
 
-            doc.setData({
-                proveedor: 'ADMINISTRACION DE FLOTAS',
-                instalador: 'CS142W',
-                folio_acuerdo: folioAcuerdo,
-                fecha_visita: new Date().toISOString().split('T')[0],
-                cliente: 'Cliente General',
-                razon_social: 'Flota Geotab',
-                lugar_atencion: 'Campo',
-                recibe: 'Operador',
-                contacto: 'N/A',
-                ciudad: 'Ciudad de México',
-                estado: 'CDMX',
-                serie_go9: serialGo9 || '',
-                imei_camara: imeiCamara || '',
-                sim_camara: numeroSim || '',
-                vin: vinVehiculo || '',
-                comentario_tecnico: comentarioTecnico || 'Ok'
-            });
+        // Información General
+        doc.fontSize(14).fillColor('#111827').text('1. Datos Generales de la Instalación', { underline: true });
+        doc.fontSize(11).fillColor('#374151');
+        doc.text(`• Folio de Acuerdo: ${folioAcuerdo}`);
+        doc.text(`• Fecha de Emisión: ${new Date().toISOString().split('T')[0]}`);
+        doc.text(`• Proveedor: ADMINISTRACION DE FLOTAS`);
+        doc.text(`• Instalador Clave: CS142W`);
+        doc.moveDown(1);
 
-            doc.render();
-            const buf = doc.getZip().generate({ type: 'nodebuffer' });
-            fs.writeFileSync(outputPath, buf);
-        } else {
-            // Si no existe la plantilla base, creamos un documento Word alternativo autónomo para evitar errores
-            const header = "<w:p><w:r><w:t>ORDEN DE SERVICIO - GEOTAB ODS</w:t></w:r></w:p>";
-            const body = `<w:p><w:r><w:t>Folio: ${folioAcuerdo} | VIN: ${vinVehiculo || 'N/A'} | Serie GO9: ${serialGo9 || 'N/A'}</w:t></w:r></w:p>`;
-            const dummyDoc = `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${header}${body}</w:body></w:document>`;
-            
-            const zip = new PizZip();
-            zip.file("word/document.xml", dummyDoc);
-            const buf = zip.generate({ type: 'nodebuffer' });
-            fs.writeFileSync(outputPath, buf);
-        }
+        // Datos del Hardware
+        doc.fontSize(14).fillColor('#111827').text('2. Componentes Registrados (Hardware)', { underline: true });
+        doc.fontSize(11).fillColor('#374151');
+        doc.text(`• Número de Serie GO9: ${serialGo9 || 'N/A'}`);
+        doc.text(`• IMEI Cámara: ${imeiCamara || 'N/A'}`);
+        doc.text(`• Número de SIM: ${numeroSim || 'N/A'}`);
+        doc.text(`• VIN del Vehículo: ${vinVehiculo || 'N/A'}`);
+        doc.moveDown(1);
 
-        // Registrar en memoria autónoma
+        // Diagnóstico y Comentarios
+        doc.fontSize(14).fillColor('#111827').text('3. Diagnóstico y Estatus Técnico', { underline: true });
+        doc.fontSize(11).fillColor('#374151');
+        doc.text(`• Comentario Técnico: ${comentarioTecnico || 'Instalación completada satisfactoriamente.'}`);
+        doc.text(`• Estatus General: Óptimo (100% Funcional)`);
+        doc.moveDown(2);
+
+        // Pie de página
+        doc.fontSize(9).fillColor('#9CA3AF').text('Documento generado automáticamente por el sistema autónomo Geotab ODS.', { align: 'center' });
+
+        doc.end();
+
+        // Esperar a que termine de escribirse el archivo PDF
+        await new Promise((resolve, reject) => {
+            stream.on('finish', resolve);
+            stream.on('error', reject);
+        });
+
+        // Registrar en la memoria autónoma del sistema
         historialInstalaciones.push({
             fecha: new Date().toISOString().split('T')[0],
             eco: vinVehiculo || `ECO-${folioAcuerdo}`,
@@ -158,7 +163,7 @@ app.post('/api/generar-ods', upload.fields([
             folio: `ODS-${folioAcuerdo}`,
             unidad: vinVehiculo || `Unidad-${folioAcuerdo}`,
             operador: "Operador Campo",
-            detalle: comentarioTecnico || "Instalación autónoma exitosa",
+            detalle: comentarioTecnico || "Instalación autónoma exitosa en PDF",
             salud: "Óptima",
             kpi: "100%",
             fecha: new Date().toISOString().split('T')[0]
@@ -167,7 +172,7 @@ app.post('/api/generar-ods', upload.fields([
         const hostUrl = req.protocol + '://' + req.get('host');
         return res.json({
             exito: true,
-            mensaje: '¡Orden generada y registrada con éxito!',
+            mensaje: '¡Orden en PDF generada y registrada con éxito!',
             descargaUrl: `${hostUrl}/public/${outputFilename}`
         });
 
@@ -175,7 +180,6 @@ app.post('/api/generar-ods', upload.fields([
         return res.status(500).json({ exito: false, error: error.message });
     }
 });
-
 // --- RUTA 3: OBTENER KPIS ---
 app.get('/api/kpis', verificarAdmin, (req, res) => {
     const totalInstalaciones = historialInstalaciones.length;
