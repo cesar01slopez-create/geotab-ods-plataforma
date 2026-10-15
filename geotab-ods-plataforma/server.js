@@ -13,12 +13,17 @@ try { db = JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch (e) {}
 const save = () => fs.writeFileSync(FILE, JSON.stringify(db));
 const t = v => String(v ?? '').trim(), nm = v => t(v).toUpperCase();
 
-// Primer arranque: crea al coordinador
-if (!db.usuarios.some(u => u.rol === 'coord')) {
-  const pass = process.env.ADMIN_PASS || crypto.randomBytes(5).toString('hex');
-  db.usuarios.push({ usuario: t(process.env.ADMIN_USER || 'cesar.admin').toLowerCase(), nombre: 'Cesar Sanchez', rol: 'coord', hash: bcrypt.hashSync(pass, 10) });
-  save();
-  if (!process.env.ADMIN_PASS) console.log('Contraseña inicial del coordinador:', pass);
+// Cuenta del coordinador: si defines ADMIN_PASS, SIEMPRE manda sobre lo guardado (sirve para recuperar el acceso)
+const ADMIN_USER = t(process.env.ADMIN_USER || 'cesar.admin').replace(/^["']|["']$/g, '').toLowerCase();
+const ADMIN_PASS = t(process.env.ADMIN_PASS).replace(/^["']|["']$/g, '');   // quita espacios y comillas pegadas por error
+if (ADMIN_PASS) {
+  const hash = bcrypt.hashSync(ADMIN_PASS, 10), c = db.usuarios.find(u => u.usuario === ADMIN_USER);
+  if (c) { c.hash = hash; c.rol = 'coord'; } else db.usuarios.push({ usuario: ADMIN_USER, nombre: 'Cesar Sanchez', rol: 'coord', hash });
+  save(); console.log('Coordinador listo. Usuario:', ADMIN_USER);
+} else if (!db.usuarios.some(u => u.rol === 'coord')) {
+  const pass = crypto.randomBytes(5).toString('hex');
+  db.usuarios.push({ usuario: ADMIN_USER, nombre: 'Cesar Sanchez', rol: 'coord', hash: bcrypt.hashSync(pass, 10) });
+  save(); console.log('Usuario del coordinador:', ADMIN_USER, '| Contraseña inicial:', pass);
 }
 
 const ok = (res, x = {}) => res.json({ exito: true, success: true, ...x });
@@ -35,7 +40,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ---------- Sesión ----------
 app.post('/api/login', (req, res) => {
   const u = db.usuarios.find(x => x.usuario === t(req.body.usuario).toLowerCase());
-  if (!u || !bcrypt.compareSync(String(req.body.password || ''), u.hash)) return bad(res, 401, 'Usuario o contraseña incorrectos');
+  if (!u || !bcrypt.compareSync(String(req.body.password || ''), u.hash)) {
+    console.log('Login fallido para "' + t(req.body.usuario) + '". Usuarios existentes:', db.usuarios.map(x => x.usuario).join(', '));
+    return bad(res, 401, 'Usuario o contraseña incorrectos');
+  }
   const usuario = { usuario: u.usuario, nombre: u.nombre, rol: u.rol };
   ok(res, { token: jwt.sign(usuario, SECRET, { expiresIn: '12h' }), usuario });
 });
