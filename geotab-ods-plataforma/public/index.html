@@ -499,5 +499,120 @@ async function enviarODSCompleto(e) {
             }
         }
     </script>
-</body>
+// Parche para tu index.html actual. Agrégalo justo antes de </body>:  <script src="/parche.js"></script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const J = b => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
+  const api = async (u, o = {}) => {
+    o.headers = { ...(o.headers || {}), Authorization: 'Bearer ' + (localStorage.getItem('tk') || '') };
+    const r = await fetch(u, o);
+    if (r.status === 401) { localStorage.removeItem('tk'); location.reload(); throw new Error('Sesión expirada'); }
+    return r.json();
+  };
+ 
+  function entrar(u) {
+    currentRole = u.rol === 'coord' ? 'coordinador' : 'tecnico';
+    $('user-display').textContent = u.nombre.toUpperCase();
+    $('user-initial').textContent = u.nombre.charAt(0).toUpperCase();
+    $('login-view').classList.add('hidden'); $('dashboard-view').classList.remove('hidden');
+    const c = currentRole === 'coordinador';
+    $('nav-coordinador').classList.toggle('hidden', !c); $('nav-tecnico').classList.toggle('hidden', c);
+    $('user-role-display').textContent = c ? 'Coordinador AT&T' : 'Instalador / Técnico de Campo';
+    if (c) llenarTecnicos();
+    switchTab(c ? 'tab-coord-servicios' : 'tab-tec-mis-servicios');
+  }
+  async function llenarTecnicos() {
+    const d = await api('/api/instaladores'), s = document.querySelector('[name=tecnicoAsignado]');
+    if (s && d.exito) s.innerHTML = d.instaladores.map(i => `<option>${E(i.nombre)}</option>`).join('');
+  }
+ 
+  window.handleLogin = async e => {
+    e.preventDefault(); const er = $('login-error'); er.classList.add('hidden');
+    try {
+      const d = await (await fetch('/api/login', J({ usuario: $('usuario').value, password: $('password').value }))).json();
+      if (!d.exito) { er.textContent = d.error || 'Credenciales incorrectas'; er.classList.remove('hidden'); return; }
+      localStorage.setItem('tk', d.token); entrar(d.usuario);
+    } catch (x) { er.textContent = 'No hay conexión con el servidor'; er.classList.remove('hidden'); }
+  };
+  window.logout = () => { localStorage.removeItem('tk'); location.reload(); };
+ 
+  window.cargarServiciosCoordinador = async () => {
+    const d = await api('/api/servicios'), tb = $('tabla-coord-servicios');
+    tb.innerHTML = d.servicios.length ? d.servicios.map(s => `<tr class="hover:bg-slate-50">
+      <td class="p-3 font-bold text-slate-800">${E(s.folio)}</td><td class="p-3">${E(s.unidad)}</td><td class="p-3">${E(s.ciudad)}</td><td class="p-3">${E(s.operador)}</td>
+      <td class="p-3"><span class="px-2.5 py-0.5 rounded-full font-bold ${s.estatus === 'Completado' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">${E(s.estatus)}</span></td>
+      <td class="p-3 text-center">${s.urlDoc ? `<a href="${E(s.urlDoc)}" target="_blank" download class="text-blue-600 font-bold" title="Descargar PDF"><i class="fa-solid fa-download"></i></a>` : '—'}</td></tr>`).join('')
+      : '<tr><td colspan="6" class="p-4 text-center text-slate-500">No hay servicios registrados.</td></tr>';
+  };
+  window.cargarServiciosTecnico = async () => {
+    const d = await api('/api/servicios'), c = $('lista-servicios-tecnico');
+    c.innerHTML = d.servicios.length ? d.servicios.map(s => `<div class="bg-white p-4 rounded-xl border shadow-sm flex justify-between items-center">
+      <div><span class="font-bold text-slate-900 text-sm">${E(s.folio)} · ${E(s.motivo)}</span><div class="text-xs text-slate-500">${E(s.cliente)} | ${E(s.lugar)} | ${E(s.fecha)} ${E(s.hora)}</div></div>
+      ${s.urlDoc ? `<a href="${E(s.urlDoc)}" download class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg">Descargar PDF</a>`
+        : `<button data-f="${E(s.folio)}" onclick="seleccionarFolioTecnico(this.dataset.f)" class="px-4 py-2 bg-brandOrange text-white text-xs font-bold rounded-lg shadow">Llenar ODS y fotos</button>`}</div>`).join('')
+      : '<div class="p-4 bg-white rounded-xl border text-slate-500 text-xs">No tienes servicios asignados.</div>';
+  };
+  window.crearServicioCoordinador = async e => {
+    e.preventDefault(); const f = $('form-nuevo-servicio');
+    try {
+      const d = await api('/api/servicios', J(Object.fromEntries(new FormData(f).entries())));
+      if (!d.exito) return alert(d.error); alert('Servicio creado y asignado.'); f.reset(); llenarTecnicos(); switchTab('tab-coord-servicios');
+    } catch (x) { alert('Error al guardar el servicio.'); }
+  };
+  window.registrarInstalador = async e => {
+    e.preventDefault();
+    const d = await api('/api/instaladores', J({ nombre: $('nuevo-nombre').value, usuario: $('nuevo-usuario').value, password: $('nuevo-password').value }));
+    if (!d.exito) return alert(d.error);
+    alert('Técnico registrado.'); ['nuevo-nombre', 'nuevo-usuario', 'nuevo-password'].forEach(i => $(i).value = ''); llenarTecnicos();
+  };
+ 
+  // Firmas en el formulario del técnico
+  const pad = c => {
+    const x = c.getContext('2d'); x.lineWidth = 2.4; x.lineCap = 'round'; let d = false;
+    const p = e => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; };
+    c.onpointerdown = e => { d = true; c.setPointerCapture(e.pointerId); x.beginPath(); x.moveTo(...p(e)); };
+    c.onpointermove = e => { if (d) { x.lineTo(...p(e)); x.stroke(); c.dataset.f = 1; } };
+    c.onpointerup = () => d = false;
+  };
+  const limpiar = c => { c.getContext('2d').clearRect(0, 0, c.width, c.height); delete c.dataset.f; };
+  $('btn-generar-ods').insertAdjacentHTML('beforebegin', `<div class="space-y-3"><h4 class="text-xs font-bold text-slate-700 uppercase">Firmas</h4>
+    <input id="firma-nombre" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Nombre de quien recibe (cliente)">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      ${[['firma-cliente', 'Firma del cliente'], ['firma-tecnico', 'Firma del técnico']].map(([id, l]) => `<div><div class="text-xs font-semibold text-slate-600 mb-1">${l}</div>
+        <canvas id="${id}" width="500" height="160" class="w-full bg-white border-2 border-dashed border-slate-300 rounded-lg" style="touch-action:none"></canvas>
+        <button type="button" data-clr="${id}" class="text-xs text-slate-500 underline">Borrar</button></div>`).join('')}
+    </div></div>`);
+  ['firma-cliente', 'firma-tecnico'].forEach(id => pad($(id)));
+  document.querySelectorAll('[data-clr]').forEach(b => b.onclick = () => limpiar($(b.dataset.clr)));
+  $('btn-generar-ods').textContent = 'Generar y descargar ODS en PDF';
+ 
+  window.enviarODSCompleto = async e => {
+    e.preventDefault(); const f = $('form-ods-completo'), fd = new FormData(f), b = $('btn-generar-ods'), c1 = $('firma-cliente'), c2 = $('firma-tecnico');
+    if (!c1.dataset.f || !c2.dataset.f) return alert('Faltan las firmas del cliente y del técnico.');
+    fd.append('firmaCliente', c1.toDataURL('image/png')); fd.append('firmaTecnico', c2.toDataURL('image/png')); fd.append('nombreCliente', $('firma-nombre').value);
+    b.disabled = true; b.textContent = 'Generando PDF...';
+    try {
+      const d = await api('/api/generar-ods', { method: 'POST', body: fd });
+      if (!d.exito) throw new Error(d.error || 'No se pudo generar');
+      const l = $('link-descarga'); l.href = d.descargaUrl; l.setAttribute('download', 'ODS_' + fd.get('folioAcuerdo') + '.pdf'); $('resultado-ods').classList.remove('hidden');
+      l.click(); f.reset(); limpiar(c1); limpiar(c2);
+    } catch (x) { alert('Error: ' + x.message); }
+    finally { b.disabled = false; b.textContent = 'Generar y descargar ODS en PDF'; }
+  };
+ 
+  // Importar el Excel de servicios (solo coordinador)
+  $('tab-coord-servicios').insertAdjacentHTML('afterbegin', `<label class="inline-flex items-center px-4 py-2 bg-white border rounded-lg text-xs font-bold text-slate-700 cursor-pointer shadow-sm">
+    Importar Excel de servicios<input type="file" id="xl" accept=".xlsx,.xls" class="hidden"></label>`);
+  $('xl').onchange = async e => {
+    const fd = new FormData(); fd.append('archivo', e.target.files[0]);
+    const d = await api('/api/servicios/importar', { method: 'POST', body: fd }); e.target.value = '';
+    alert(d.exito ? `${d.cargados} servicios cargados. Repetidos: ${d.repetidos}. Filas incompletas: ${d.filasIncompletas.join(', ') || 'ninguna'}.` : d.error);
+    cargarServiciosCoordinador();
+  };
+ 
+  // Restaurar sesión al abrir la página
+  if (localStorage.getItem('tk')) api('/api/yo').then(d => d.exito && entrar(d.usuario)).catch(() => {});
+})();
+  </body>
 </html>
