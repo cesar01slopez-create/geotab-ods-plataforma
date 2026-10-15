@@ -1,5 +1,6 @@
 const express = require('express');
 const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
 const xlsx = require('xlsx');
 const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
@@ -10,6 +11,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 const app = express();
+const upload = multer({ dest: 'uploads/' });
 app.use(express.json());
 app.use(cors());
 
