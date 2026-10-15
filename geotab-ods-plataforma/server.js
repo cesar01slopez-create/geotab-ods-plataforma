@@ -85,7 +85,7 @@ app.post('/api/usuarios/crear', verificarAdmin, (req, res) => {
     res.json({ exito: true, mensaje: `Usuario '${nuevoUsuario}' creado correctamente como ${rol}.` });
 });
 
-// --- RUTA 2: GENERAR ODS (Usando la Plantilla Oficial Word) ---
+// --- RUTA: GENERAR ODS ---
 app.post('/api/generar-ods', upload.fields([
     { name: 'foto_adherible', maxCount: 1 },
     { name: 'foto_imei_camara', maxCount: 1 },
@@ -109,19 +109,18 @@ app.post('/api/generar-ods', upload.fields([
             const zip = new PizZip(content);
             const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
 
-            // Inyectar datos en la plantilla oficial
             doc.setData({
                 proveedor: 'ADMINISTRACION DE FLOTAS',
                 instalador: 'CS142W',
                 folio_acuerdo: folioAcuerdo,
                 fecha_visita: new Date().toISOString().split('T')[0],
-                cliente: req.body.cliente || 'BARBARA MEDRANO',
-                razon_social: req.body.razonSocial || 'FRACCIONARIANA LA ROMITA',
-                lugar_atencion: req.body.lugarAtencion || 'CALLE 106 X 77 Y 79',
-                recibe: req.body.recibe || 'BARBARA MEDRANO',
-                contacto: req.body.contacto || '4424056296',
-                ciudad: req.body.ciudad || 'MERIDA',
-                estado: req.body.estado || 'YUCATAN',
+                cliente: req.body.cliente || 'CLIENTE GENERAL',
+                razon_social: req.body.razonSocial || 'EMPRESA',
+                lugar_atencion: req.body.lugarAtencion || 'MEXICO',
+                recibe: req.body.recibe || 'PERSONAL',
+                contacto: req.body.contacto || 'N/A',
+                ciudad: req.body.ciudad || 'CDMX',
+                estado: req.body.estado || 'CDMX',
                 serie_go9: serialGo9 || '',
                 imei_camara: imeiCamara || '',
                 sim_camara: numeroSim || '',
@@ -133,11 +132,37 @@ app.post('/api/generar-ods', upload.fields([
             const buf = doc.getZip().generate({ type: 'nodebuffer' });
             fs.writeFileSync(outputPath, buf);
         } else {
-            // Documento de respaldo si la plantilla no estuviera presente físicamente
             const zip = new PizZip();
             zip.file("word/document.xml", `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body><w:p><w:r><w:t>ODS - Folio: ${folioAcuerdo}</w:t></w:r></w:p></w:body></w:document>`);
             fs.writeFileSync(outputPath, zip.generate({ type: 'nodebuffer' }));
         }
+
+        const hostUrl = req.protocol + '://' + req.get('host');
+        const fileUrl = `${hostUrl}/${outputFilename}`;
+
+        // Registrar en la lista de servicios con su URL de descarga
+        listaServicios.push({
+            id: listaServicios.length + 1,
+            folio: `ODS-${folioAcuerdo}`,
+            unidad: vinVehiculo || `Unidad-${folioAcuerdo}`,
+            operador: "ARMANDO GUTIERREZ",
+            detalle: comentarioTecnico || "Instalación completada",
+            salud: "Óptima",
+            kpi: "100%",
+            fecha: new Date().toISOString().split('T')[0],
+            urlDoc: fileUrl
+        });
+
+        return res.json({
+            exito: true,
+            mensaje: '¡Orden institucional generada y registrada con éxito!',
+            descargaUrl: fileUrl
+        });
+
+    } catch (error) {
+        return res.status(500).json({ exito: false, error: error.message });
+    }
+});
 
         // Registrar en memoria autónoma
         historialInstalaciones.push({
