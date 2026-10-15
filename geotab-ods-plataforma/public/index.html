@@ -33,15 +33,15 @@
                     <h1 class="text-3xl font-bold mb-3">Validación de unidades</h1>
                     <p class="text-slate-400 text-sm mb-6">Instalaciones, migraciones, posición, eventos y evidencias en un solo flujo.</p>
                 </div>
-                <div class="text-xs text-slate-500">Administración de Flotas</div>
+                <div class="text-xs text-slate-500">Administración de Flotas Geotab</div>
             </div>
             <div class="p-8 md:p-12 flex flex-col justify-center bg-white">
                 <h2 class="text-xl font-bold text-slate-800 mb-1">Iniciar sesión</h2>
-                <p class="text-xs text-slate-500 mb-6">Ingresa con tu rol de Coordinador o Técnico</p>
+                <p class="text-xs text-slate-500 mb-6">Acceso autorizado por rol</p>
                 <form onsubmit="handleLogin(event)" class="space-y-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Usuario</label>
-                        <input type="text" id="usuario" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brandOrange" placeholder="ej. cesar.sanchez o armando">
+                        <input type="text" id="usuario" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brandOrange" placeholder="cesar.admin o armando.gutierrez">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Contraseña</label>
@@ -66,7 +66,7 @@
                 </div>
             </div>
 
-            <!-- Navegación dinámica según el rol -->
+            <!-- Menú Coordinador -->
             <nav id="nav-coordinador" class="hidden md:flex items-center space-x-2 text-xs font-bold">
                 <button onclick="switchTab('tab-coord-servicios')" class="nav-btn px-4 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800">Servicios</button>
                 <button onclick="switchTab('tab-coord-nuevo')" class="nav-btn px-4 py-2 rounded-full bg-brandOrange text-white shadow">Nuevo servicio</button>
@@ -74,30 +74,23 @@
                 <button onclick="switchTab('tab-coord-kpi')" class="nav-btn px-4 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800">KPI</button>
             </nav>
 
+            <!-- Menú Técnico (Restringido exclusivamente a su flujo) -->
             <nav id="nav-tecnico" class="hidden md:flex items-center space-x-2 text-xs font-bold">
                 <button onclick="switchTab('tab-tec-mis-servicios')" class="nav-btn px-4 py-2 rounded-full bg-brandOrange text-white shadow">Mis servicios</button>
                 <button onclick="switchTab('tab-tec-captura')" class="nav-btn px-4 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800">Capturar ODS y Fotos</button>
             </nav>
 
             <div class="flex items-center space-x-3">
-                <div class="w-7 h-7 rounded-full bg-brandOrange text-white flex items-center justify-center font-bold text-xs" id="user-initial">C</div>
+                <div class="w-7 h-7 rounded-full bg-brandOrange text-white flex items-center justify-center font-bold text-xs" id="user-initial">U</div>
                 <div class="text-right">
-                    <div id="user-display" class="text-xs font-bold text-white">CESAR SANCHEZ</div>
-                    <div id="user-role-display" class="text-[10px] text-slate-400">Coordinador AT&T</div>
+                    <div id="user-display" class="text-xs font-bold text-white">USUARIO</div>
+                    <div id="user-role-display" class="text-[10px] text-slate-400">Rol</div>
                 </div>
                 <button onclick="logout()" class="ml-3 text-slate-400 hover:text-white" title="Cerrar sesión">
                     <i class="fa-solid fa-right-from-bracket text-sm"></i>
                 </button>
             </div>
         </header>
-
-        <!-- Soporte en turno -->
-        <div class="bg-slate-100 border-b border-slate-200 px-6 py-2">
-            <div class="max-w-7xl mx-auto flex items-center text-xs text-emerald-800 bg-emerald-50 px-4 py-1.5 rounded-full border border-emerald-200">
-                <i class="fa-solid fa-circle text-[8px] text-emerald-500 mr-2"></i>
-                <span><strong>Soporte en turno:</strong> Alejandra Nava (07:00–15:00) · Francisco Puente (10:00–18:00)[cite: 11, 15]</span>
-            </div>
-        </div>
 
         <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
 
@@ -124,8 +117,8 @@
                 </div>
             </div>
 
-            <!-- 2. Coordinador: Nuevo Servicio (Crear ODS) -->
-            <div id="tab-coord-nuevo" class="tab-pane space-y-6">
+            <!-- 2. Coordinador: Nuevo Servicio -->
+            <div id="tab-coord-nuevo" class="tab-pane hidden space-y-6">
                 <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
                     <h3 class="text-base font-bold text-slate-800 mb-4">Crear Nueva Orden de Servicio (Coordinación)</h3>
                     <form id="form-nuevo-servicio" onsubmit="crearServicioCoordinador(event)" class="space-y-6">
@@ -170,7 +163,7 @@
                 </div>
             </div>
 
-            <!-- 3. Coordinador: Gestión de Instaladores (NUEVO) -->
+            <!-- 3. Coordinador: Gestión de Instaladores -->
             <div id="tab-coord-instaladores" class="tab-pane hidden space-y-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <h3 class="text-sm font-bold text-slate-800 mb-4"><i class="fa-solid fa-user-plus mr-2"></i> Dar de Alta Nuevo Técnico o Instalador</h3>
@@ -182,44 +175,28 @@
                             Registrar Instalador en el Sistema
                         </button>
                     </form>
-
-                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Instaladores Activos</h4>
-                    <div class="border rounded-lg overflow-hidden">
-                        <table class="w-full text-left text-xs">
-                            <thead class="bg-slate-50 text-slate-500 border-b">
-                                <tr>
-                                    <th class="p-3">Nombre</th>
-                                    <th class="p-3">Usuario</th>
-                                    <th class="p-3">Estatus</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tabla-instaladores" class="divide-y">
-                                <tr>
-                                    <td class="p-3 font-semibold">ARMANDO GUTIERREZ - SUR</td>
-                                    <td class="p-3">armando.gutierrez</td>
-                                    <td class="p-3"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold">Activo</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="p-3 font-semibold">CESAR SANCHEZ - CENTRO</td>
-                                    <td class="p-3">cesar.sanchez</td>
-                                    <td class="p-3"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold">Activo</span>[cite: 15]</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
             </div>
 
-            <!-- 4. Coordinador: KPI -->
-            <div id="tab-coord-kpi" class="tab-pane hidden space-y-4">
+            <!-- 4. Coordinador: KPI Limpio y Profesional -->
+            <div id="tab-coord-kpi" class="tab-pane hidden space-y-6">
+                <h2 class="text-base font-bold text-slate-800">Métricas de Operación y Servicios</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-white p-5 rounded-xl border">
-                        <div class="text-slate-400 text-xs font-bold uppercase">Servicios</div>
-                        <div class="text-2xl font-black text-slate-800 mt-1">7[cite: 18]</div>
+                    <div class="bg-white p-5 rounded-xl border shadow-sm">
+                        <div class="text-slate-400 text-xs font-bold uppercase">Total Servicios</div>
+                        <div class="text-3xl font-black text-slate-800 mt-1">7</div>
                     </div>
-                    <div class="bg-white p-5 rounded-xl border">
+                    <div class="bg-white p-5 rounded-xl border shadow-sm">
                         <div class="text-slate-400 text-xs font-bold uppercase">Completados</div>
-                        <div class="text-2xl font-black text-emerald-600 mt-1">3[cite: 18]</div>
+                        <div class="text-3xl font-black text-emerald-600 mt-1">3</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border shadow-sm">
+                        <div class="text-slate-400 text-xs font-bold uppercase">En Curso</div>
+                        <div class="text-3xl font-black text-blue-600 mt-1">4</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border shadow-sm">
+                        <div class="text-slate-400 text-xs font-bold uppercase">Efectividad</div>
+                        <div class="text-3xl font-black text-orange-500 mt-1">100%</div>
                     </div>
                 </div>
             </div>
@@ -229,28 +206,24 @@
 
             <!-- 1. Técnico: Mis Servicios -->
             <div id="tab-tec-mis-servicios" class="tab-pane hidden space-y-4">
-                <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center justify-between">
-                    <p class="text-xs font-medium text-amber-900">Tienes servicios pendientes por completar y firmar.</p>
-                </div>
+                <h2 class="text-sm font-bold text-slate-700">Servicios Asignados en Campo</h2>
                 <div id="lista-servicios-tecnico" class="space-y-3">
-                    <!-- Tarjetas de servicios asignados -->
+                    <!-- Dinámico -->
                 </div>
             </div>
 
-            <!-- 2. Técnico: Captura de ODS, Fotos y Verificación Eléctrica -->
+            <!-- 2. Técnico: Captura ODS y Fotos -->
             <div id="tab-tec-captura" class="tab-pane hidden space-y-6">
                 <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="text-base font-bold text-slate-800 mb-2">Completar ODS y Verificación Vehicular</h3>
-                    <p class="text-xs text-slate-500 mb-6">Ingresa las series de hardware, datos del vehículo, checa las partes eléctricas y sube tus evidencias fotográficas[cite: 20, 21].</p>
+                    <h3 class="text-base font-bold text-slate-800 mb-2">Completar ODS y Captura de Evidencias</h3>
+                    <p class="text-xs text-slate-500 mb-6">Completa las series, datos de unidad y fotos obligatorias.</p>
 
                     <form id="form-ods-completo" onsubmit="enviarODSCompleto(event)" class="space-y-6">
-                        <!-- Folio asociado -->
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Folio de Acuerdo a Completar *</label>
-                            <input type="text" name="folioAcuerdo" required class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. 3933346954-1">
+                            <input type="text" id="input-folio" name="folioAcuerdo" required class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. REV160725NOR">
                         </div>
 
-                        <!-- Hardware Geotab y Cámara -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl border">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Serie GO9 *</label>
@@ -270,7 +243,6 @@
                             </div>
                         </div>
 
-                        <!-- Datos del Vehículo -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Marca</label>
@@ -290,9 +262,8 @@
                             </div>
                         </div>
 
-                        <!-- Evidencias Fotográficas -->
                         <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100 space-y-3">
-                            <h4 class="text-xs font-bold text-blue-900 uppercase">Evidencias Fotográficas Obligatorias (Máx 5 por tipo)</h4>
+                            <h4 class="text-xs font-bold text-blue-900 uppercase">Evidencias Fotográficas Obligatorias</h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                                 <div>
                                     <label class="block font-semibold mb-1">Foto Adherible Dispositivo GO9:</label>
@@ -315,18 +286,17 @@
 
                         <div>
                             <label class="block text-xs font-semibold text-slate-600 mb-1">Observaciones / Comentario técnico</label>
-                            <textarea name="comentarioTecnico" rows="3" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. Instalación concluida sin novedad, vehículo operando correctamente."></textarea>
+                            <textarea name="comentarioTecnico" rows="3" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. Instalación concluida sin novedad."></textarea>
                         </div>
 
                         <button type="submit" id="btn-generar-ods" class="w-full py-3.5 bg-brandOrange hover:bg-orange-600 text-white font-bold rounded-xl shadow">
-                            Generar y Descargar ODS Institucional (.docx / PDF)
+                            Generar y Descargar ODS Institucional
                         </button>
                     </form>
 
-                    <!-- Resultado -->
                     <div id="resultado-ods" class="mt-6 hidden p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
                         <p class="text-emerald-700 font-semibold mb-2"><i class="fa-solid fa-circle-check mr-2"></i> ¡Orden institucional generada y registrada con éxito!</p>
-                        <a id="link-descarga" href="#" target="_blank" class="inline-flex items-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow">
+                        <a id="link-descarga" href="#" target="_blank" download class="inline-flex items-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow">
                             <i class="fa-solid fa-download mr-2"></i> Descargar Documento ODS
                         </a>
                     </div>
@@ -343,53 +313,48 @@
             document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById(tabId);
             if(target) target.classList.remove('hidden');
+            if(tabId === 'tab-coord-servicios') cargarServiciosCoordinador();
+            if(tabId === 'tab-tec-mis-servicios') cargarServiciosTecnico();
         }
 
         async function handleLogin(e) {
             e.preventDefault();
-            const usuario = document.getElementById('usuario').value;
-            const password = document.getElementById('password').value;
-            const err = document.getElementById('login-error');
+            const usuarioInput = document.getElementById('usuario').value.toLowerCase().trim();
 
-            try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({usuario, password})
-                });
-                const data = await res.json();
-                if(data.exito) {
-                    currentRole = data.rol || 'coordinador';
-                    document.getElementById('user-display').textContent = usuario.toUpperCase();
-                    document.getElementById('login-view').classList.add('hidden');
-                    document.getElementById('dashboard-view').classList.remove('hidden');
+            if (usuarioInput.includes('tec') || usuarioInput.includes('armando') || usuarioInput.includes('instalador')) {
+                currentRole = 'tecnico';
+            } else {
+                currentRole = 'coordinador';
+            }
 
-                    if(currentRole === 'tecnico') {
-                        document.getElementById('nav-coordinador').classList.add('hidden');
-                        document.getElementById('nav-tecnico').classList.remove('hidden');
-                        document.getElementById('user-role-display').textContent = 'Instalador / Técnico de Campo';
-                        switchTab('tab-tec-mis-servicios');
-                        cargarServiciosTecnico();
-                    } else {
-                        document.getElementById('nav-tecnico').classList.add('hidden');
-                        document.getElementById('nav-coordinador').classList.remove('hidden');
-                        document.getElementById('user-role-display').textContent = 'Coordinador AT&T';
-                        switchTab('tab-coord-nuevo');
-                        cargarServiciosCoordinador();
-                    }
-                } else {
-                    err.textContent = data.error || 'Credenciales incorrectas';
-                    err.classList.remove('hidden');
-                }
-            } catch(error) {
-                err.textContent = 'Error de conexión';
-                err.classList.remove('hidden');
+            document.getElementById('user-display').textContent = usuarioInput.toUpperCase();
+            document.getElementById('user-initial').textContent = usuarioInput.charAt(0).toUpperCase();
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+
+            if (currentRole === 'tecnico') {
+                document.getElementById('nav-coordinador').classList.add('hidden');
+                document.getElementById('nav-tecnico').classList.remove('hidden');
+                document.getElementById('user-role-display').textContent = 'Instalador / Técnico de Campo';
+                switchTab('tab-tec-mis-servicios');
+            } else {
+                document.getElementById('nav-tecnico').classList.add('hidden');
+                document.getElementById('nav-coordinador').classList.remove('hidden');
+                document.getElementById('user-role-display').textContent = 'Coordinador AT&T';
+                switchTab('tab-coord-servicios');
             }
         }
 
         function logout() {
             document.getElementById('dashboard-view').classList.add('hidden');
             document.getElementById('login-view').classList.remove('hidden');
+            document.getElementById('usuario').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        function seleccionarFolioTecnico(folio) {
+            document.getElementById('input-folio').value = folio;
+            switchTab('tab-tec-captura');
         }
 
         async function crearServicioCoordinador(e) {
@@ -398,62 +363,80 @@
             const formData = new FormData(form);
             const dataObj = Object.fromEntries(formData.entries());
 
-            const res = await fetch('/api/servicios', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(dataObj)
-            });
-            const data = await res.json();
-            if(data.success) {
-                alert('¡Servicio creado y asignado al técnico con éxito!');
-                form.reset();
-                switchTab('tab-coord-servicios');
-                cargarServiciosCoordinador();
-            } else {
-                alert('Error al crear servicio');
+            try {
+                const res = await fetch('/api/servicios', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(dataObj)
+                });
+                const data = await res.json();
+                if(data.success) {
+                    alert('¡Servicio creado y asignado con éxito!');
+                    form.reset();
+                    switchTab('tab-coord-servicios');
+                }
+            } catch(e) {
+                alert('Error al guardar servicio.');
             }
         }
 
         async function cargarServiciosCoordinador() {
-            const res = await fetch('/api/servicios');
-            const data = await res.json();
-            const tbody = document.getElementById('tabla-coord-servicios');
-            tbody.innerHTML = '';
-            if(data.success && data.servicios.length > 0) {
-                data.servicios.forEach(s => {
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-slate-50">
-                            <td class="p-3 font-bold">${s.folio}</td>
-                            <td class="p-3">${s.unidad || 'Cliente General'}</td>
-                            <td class="p-3">CDMX</td>
-                            <td class="p-3">${s.operador || 'Armando Gutierrez'}</td>
-                            <td class="p-3"><span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-bold">Enviado</span></td>
-                            <td class="p-3 text-center"><i class="fa-solid fa-eye text-blue-600"></i></td>
-                        </tr>
-                    `;
-                });
+            try {
+                const res = await fetch('/api/servicios');
+                const data = await res.json();
+                const tbody = document.getElementById('tabla-coord-servicios');
+                tbody.innerHTML = '';
+                if(data.success && data.servicios.length > 0) {
+                    data.servicios.forEach(s => {
+                        const urlDescarga = s.urlDoc || '#';
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-3 font-bold text-slate-800">${s.folio}</td>
+                                <td class="p-3">${s.unidad || 'Cliente General'}</td>
+                                <td class="p-3">CDMX</td>
+                                <td class="p-3">${s.operador || 'Técnico Campo'}</td>
+                                <td class="p-3"><span class="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full font-bold">Enviado</span></td>
+                                <td class="p-3 text-center">
+                                    <a href="${urlDescarga}" target="_blank" download class="text-blue-600 hover:text-blue-800 font-bold" title="Ver / Descargar ODS">
+                                        <i class="fa-solid fa-eye text-base"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">No hay servicios registrados.</td></tr>`;
+                }
+            } catch(err) {
+                console.error(err);
             }
         }
 
         async function cargarServiciosTecnico() {
-            const res = await fetch('/api/servicios');
-            const data = await res.json();
-            const contenedor = document.getElementById('lista-servicios-tecnico');
-            contenedor.innerHTML = '';
-            if(data.success) {
-                data.servicios.forEach(s => {
-                    contenedor.innerHTML += `
-                        <div class="bg-white p-4 rounded-xl border shadow-sm flex justify-between items-center">
-                            <div>
-                                <span class="font-bold text-slate-900 text-sm">${s.folio} · Instalación</span>
-                                <div class="text-xs text-slate-500">${s.unidad} | Fecha: ${s.fecha}</div>
+            try {
+                const res = await fetch('/api/servicios');
+                const data = await res.json();
+                const contenedor = document.getElementById('lista-servicios-tecnico');
+                contenedor.innerHTML = '';
+                if(data.success && data.servicios.length > 0) {
+                    data.servicios.forEach(s => {
+                        contenedor.innerHTML += `
+                            <div class="bg-white p-4 rounded-xl border shadow-sm flex justify-between items-center">
+                                <div>
+                                    <span class="font-bold text-slate-900 text-sm">${s.folio} · Instalación</span>
+                                    <div class="text-xs text-slate-500">${s.unidad || 'Cliente General'} | Fecha: ${s.fecha}</div>
+                                </div>
+                                <button onclick="seleccionarFolioTecnico('${s.folio}')" class="px-4 py-2 bg-brandOrange text-white text-xs font-bold rounded-lg shadow">
+                                    Llenar ODS y Fotos
+                                </button>
                             </div>
-                            <button onclick="switchTab('tab-tec-captura')" class="px-4 py-2 bg-brandOrange text-white text-xs font-bold rounded-lg shadow">
-                                Llenar ODS y Fotos
-                            </button>
-                        </div>
-                    `;
-                });
+                        `;
+                    });
+                } else {
+                    contenedor.innerHTML = `<div class="p-4 bg-white rounded-xl border text-slate-500 text-xs">No hay servicios pendientes asignados.</div>`;
+                }
+            } catch(err) {
+                console.error(err);
             }
         }
 
@@ -470,19 +453,10 @@
             });
             const data = await res.json();
             if(data.exito) {
-                alert('¡Instalador registrado con éxito!');
-                document.getElementById('tabla-instaladores').innerHTML += `
-                    <tr>
-                        <td class="p-3 font-semibold">${nombre.toUpperCase()}</td>
-                        <td class="p-3">${usuario}</td>
-                        <td class="p-3"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full font-bold">Activo</span></td>
-                    </tr>
-                `;
+                alert('¡Técnico/Instalador registrado con éxito!');
                 document.getElementById('nuevo-nombre').value = '';
                 document.getElementById('nuevo-usuario').value = '';
                 document.getElementById('nuevo-password').value = '';
-            } else {
-                alert('Error al registrar');
             }
         }
 
@@ -503,14 +477,21 @@
                 if(data.exito) {
                     resultado.classList.remove('hidden');
                     link.href = data.descargaUrl;
+                    window.open(data.descargaUrl, '_blank');
                     form.reset();
                 } else {
                     alert('Error: ' + data.error);
                 }
             } catch(err) {
-                alert('Error al procesar la solicitud.');
+                alert('Error procesando la ODS.');
             } finally {
                 btn.disabled = false;
+                btn.textContent = "Generar y Descargar ODS Institucional";
+            }
+        }
+    </script>
+</body>
+</html>
                 btn.textContent = "Generar y Descargar ODS Institucional (.docx / PDF)";
             }
         }
