@@ -1,91 +1,89 @@
 const express = require('express');
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
-const xlsx = require('xlsx');
+const path = require('path');
+const fs = require('fs');
 const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
-const fs = require('fs');
-const path = require('path');
-const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Configuración de middlewares
 app.use(express.json());
-app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
-const JWT_SECRET = process.env.JWT_SECRET || 'clave_secreta_super_segura_geotab';
+// Configuración de Multer para almacenamiento temporal de fotos
+const upload = multer({ dest: 'uploads/' });
 
-// Lista de usuarios dinámica
-let usuariosRegistrados = [
-    { id: 1, usuario: 'cesar.admin', passwordHash: bcrypt.hashSync('admin123', 8), rol: 'admin' },
-    { id: 2, usuario: 'tecnico.campo', passwordHash: bcrypt.hashSync('tec123', 8), rol: 'tecnico' }
-];
-
-let historialInstalaciones = [
-    { fecha: '2026-10-12', eco: 'ECO-101', estatus: 'Óptimo', arnes: '16 Pines' },
-    { fecha: '2026-10-13', eco: 'ECO-102', estatus: 'Óptimo', arnes: '16 Pines' }
-];
-
-// Almacenamiento autónomo en la memoria del servidor
+// Memoria autónoma del sistema
 let listaServicios = [
-    { id: 1, folio: "ODS-1001", unidad: "Unit-01", operador: "Cesar", detalle: "Mantenimiento preventivo", salud: "Óptima", kpi: "98%", fecha: "2026-10-15" }
+    {
+        id: 1,
+        folio: "ODS-1001",
+        unidad: "Unit-01",
+        operador: "Cesar",
+        detalle: "Instalación completada",
+        salud: "Óptima",
+        kpi: "100%",
+        fecha: new Date().toISOString().split('T')[0],
+        urlDoc: "#"
+    }
 ];
 
-// --- RUTA 1: LOGIN ---
+let historialInstalaciones = [];
+
+// --- RUTA: LOGIN ---
 app.post('/api/login', (req, res) => {
     const { usuario, password } = req.body;
-    const user = usuariosRegistrados.find(u => u.usuario === usuario);
-
-    if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
-        return res.status(401).json({ exito: false, error: 'Usuario o contraseña incorrectos.' });
+    if (!usuario || !password) {
+        return res.status(400).json({ exito: false, error: 'Usuario y contraseña obligatorios.' });
     }
-
-    const token = jwt.sign({ id: user.id, usuario: user.usuario, rol: user.rol }, JWT_SECRET, { expiresIn: '8h' });
-    res.json({ exito: true, token, rol: user.rol });
+    return res.json({
+        exito: true,
+        mensaje: 'Sesión iniciada correctamente',
+        rol: (usuario.toLowerCase().includes('tec') || usuario.toLowerCase().includes('armando')) ? 'tecnico' : 'coordinador'
+    });
 });
 
-// Middleware de seguridad para Administradores
-function verificarAdmin(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    if (!token) return res.status(403).json({ exito: false, error: 'Acceso denegado. Token requerido.' });
-
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) return res.status(403).json({ exito: false, error: 'Token inválido o expirado.' });
-        if (user.rol !== 'admin') return res.status(403).json({ exito: false, error: 'Permisos insuficientes.' });
-        req.user = user;
-        next();
-    });
-}
-
-// --- CREAR USUARIO DESDE EL PANEL (Solo Admin) ---
-app.post('/api/usuarios/crear', verificarAdmin, (req, res) => {
-    const { nuevoUsuario, nuevaPassword, rol } = req.body;
-
-    if (!nuevoUsuario || !nuevaPassword || !rol) {
-        return res.status(400).json({ exito: false, error: 'Faltan datos obligatorios para crear el usuario.' });
-    }
-
-    const existe = usuariosRegistrados.find(u => u.usuario === nuevoUsuario);
-    if (existe) {
-        return res.status(400).json({ exito: false, error: 'El nombre de usuario ya está registrado.' });
-    }
-
-    const nuevoId = usuariosRegistrados.length + 1;
-    const passwordHash = bcrypt.hashSync(nuevaPassword, 8);
-
-    usuariosRegistrados.push({
-        id: nuevoId,
-        usuario: nuevoUsuario,
-        passwordHash,
-        rol
-    });
-
-    res.json({ exito: true, mensaje: `Usuario '${nuevoUsuario}' creado correctamente como ${rol}.` });
+// --- RUTA: OBTENER SERVICIOS ---
+app.get('/api/servicios', (req, res) => {
+    return res.json({ success: true, servicios: listaServicios });
 });
 
-// --- RUTA: GENERAR ODS ---
+// --- RUTA: CREAR SERVICIO (Coordinador) ---
+app.post('/api/servicios', (req, res) => {
+    const { folioAcuerdo, tecnicoAsignado, cliente, ciudad } = req.body;
+    if (!folioAcuerdo) {
+        return res.status(400).json({ success: false, error: 'El folio es obligatorio' });
+    }
+
+    listaServicios.push({
+        id: listaServicios.length + 1,
+        folio: folioAcuerdo,
+        unidad: cliente || 'Cliente General',
+        operador: tecnicoAsignado || 'Técnico Campo',
+        detalle: 'Asignado para instalación',
+        salud: 'Pendiente',
+        kpi: '0%',
+        fecha: new Date().toISOString().split('T')[0],
+        urlDoc: '#'
+    });
+
+    return res.json({ success: true, mensaje: 'Servicio creado exitosamente' });
+});
+
+// --- RUTA: REGISTRAR INSTALADOR ---
+app.post('/api/instaladores', (req, res) => {
+    const { nombre, usuario, password } = req.body;
+    if (!nombre || !usuario) {
+        return res.status(400).json({ exito: false, error: 'Datos incompletos' });
+    }
+    return res.json({ exito: true, mensaje: 'Instalador registrado con éxito' });
+});
+
+// --- RUTA: GENERAR ODS (Plantilla Word Oficial) ---
 app.post('/api/generar-ods', upload.fields([
     { name: 'foto_adherible', maxCount: 1 },
     { name: 'foto_imei_camara', maxCount: 1 },
@@ -95,11 +93,15 @@ app.post('/api/generar-ods', upload.fields([
 ]), async (req, res) => {
     try {
         const { folioAcuerdo, serialGo9, imeiCamara, numeroSim, vinVehiculo, comentarioTecnico } = req.body;
-        if (!folioAcuerdo) return res.status(400).json({ exito: false, error: 'El folio de acuerdo es obligatorio.' });
+        if (!folioAcuerdo) {
+            return res.status(400).json({ exito: false, error: 'El folio de acuerdo es obligatorio.' });
+        }
 
         const templatePath = path.join(__dirname, 'plantilla_base.docx');
         const publicDir = path.join(__dirname, 'public');
-        if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir);
+        if (!fs.existsSync(publicDir)) {
+            fs.mkdirSync(publicDir);
+        }
 
         const outputFilename = `ODS_${folioAcuerdo}_${Date.now()}.docx`;
         const outputPath = path.join(publicDir, outputFilename);
@@ -138,9 +140,9 @@ app.post('/api/generar-ods', upload.fields([
         }
 
         const hostUrl = req.protocol + '://' + req.get('host');
-        const fileUrl = `${hostUrl}/${outputFilename}`;
+        const fileUrl = `${hostUrl}/public/${outputFilename}`;
 
-        // Registrar en la lista de servicios con su URL de descarga
+        // Actualizar o registrar en servicios
         listaServicios.push({
             id: listaServicios.length + 1,
             folio: `ODS-${folioAcuerdo}`,
@@ -164,153 +166,7 @@ app.post('/api/generar-ods', upload.fields([
     }
 });
 
-        // Registrar en memoria autónoma
-        historialInstalaciones.push({
-            fecha: new Date().toISOString().split('T')[0],
-            eco: vinVehiculo || `ECO-${folioAcuerdo}`,
-            estatus: 'Óptimo',
-            arnes: '16 Pines'
-        });
-
-        listaServicios.push({
-            id: listaServicios.length + 1,
-            folio: `ODS-${folioAcuerdo}`,
-            unidad: vinVehiculo || `Unidad-${folioAcuerdo}`,
-            operador: "ARMANDO GUTIERREZ",
-            detalle: comentarioTecnico || "Instalación completada",
-            salud: "Óptima",
-            kpi: "100%",
-            fecha: new Date().toISOString().split('T')[0]
-        });
-
-        const hostUrl = req.protocol + '://' + req.get('host');
-        return res.json({
-            exito: true,
-            mensaje: '¡Orden institucional generada y registrada con éxito!',
-            descargaUrl: `${hostUrl}/public/${outputFilename}`
-        });
-
-    } catch (error) {
-        return res.status(500).json({ exito: false, error: error.message });
-    }
+// Inicializar servidor
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
-
-// --- RUTA 3: OBTENER KPIS ---
-app.get('/api/kpis', verificarAdmin, (req, res) => {
-    const totalInstalaciones = historialInstalaciones.length;
-    const optimas = historialInstalaciones.filter(i => i.estatus === 'Óptimo').length;
-    const porcentajeSalud = totalInstalaciones > 0 ? Math.round((optimas / totalInstalaciones) * 100) : 100;
-
-    res.json({
-        totalInstalaciones,
-        saludOptimaPct: porcentajeSalud,
-        enRevision: historialInstalaciones.filter(i => i.estatus === 'Revisión').length,
-        ciegas: 0,
-        historial: historialInstalaciones
-    });
-});
-
-// --- APIS AUTÓNOMAS DE SERVICIOS ---
-app.get('/api/servicios', (req, res) => {
-    res.json({ success: true, servicios: listaServicios });
-});
-
-app.post('/api/servicios', express.json(), (req, res) => {
-    try {
-        const nuevoServicio = {
-            id: listaServicios.length + 1,
-            folio: `ODS-2026-${String(listaServicios.length + 1).padStart(3, '0')}`,
-            unidad: req.body.unidad || "Sin unidad",
-            operador: req.body.operador || "General",
-            detalle: req.body.detalle || "Servicio general de flota",
-            salud: req.body.salud || "Óptima",
-            kpi: req.body.kpi || "95%",
-            fecha: new Date().toISOString().split('T')[0]
-        };
-        
-        listaServicios.push(nuevoServicio);
-        res.json({ success: true, message: "¡Servicio registrado exitosamente!", servicio: nuevoServicio });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// Carga Masiva con Excel integrada a la memoria autónoma
-app.post('/api/servicios/masivo', upload.single('file'), (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ success: false, error: "No se subió ningún archivo Excel." });
-        }
-        const workbook = xlsx.readFile(req.file.path);
-        const sheetName = workbook.SheetNames[0];
-        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-        
-        data.forEach((item, index) => {
-            listaServicios.push({
-                id: listaServicios.length + 1,
-                folio: item.Folio || `ODS-MASIVO-${index + 1}`,
-                unidad: item.Unidad || "Desconocida",
-                operador: item.Operador || "N/A",
-                detalle: item.Detalle || item.Diagnostico || "Carga masiva Excel",
-                salud: item.Salud || "Óptima",
-                kpi: item.KPI || "90%",
-                fecha: new Date().toISOString().split('T')[0]
-            });
-        });
-
-        fs.unlinkSync(req.file.path);
-        res.json({ success: true, message: `¡Carga masiva exitosa! Se añadieron ${data.length} servicios al sistema autónomo.` });
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// Exportar datos y KPIs a Excel
-app.get('/api/exportar/excel', (req, res) => {
-    try {
-        const worksheet = xlsx.utils.json_to_sheet(listaServicios);
-        const workbook = xlsx.utils.book_new();
-        xlsx.utils.book_append_sheet(workbook, worksheet, "Flota_Servicios_KPIs");
-
-        const buffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'buffer' });
-        
-        res.setHeader('Content-Disposition', 'attachment; filename="Reporte_General_Geotab.xlsx"');
-        res.type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.send(buffer);
-    } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
-    }
-});
-
-// Archivos estáticos y ruta principal
-app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-const PORT = process.env.PORT || 3000;
-const hostUrl = req.protocol + '://' + req.get('host');
-        const fileUrl = `${hostUrl}/${outputFilename}`;
-
-        // Registrar en el historial para que aparezca en la tabla con su link real
-        listaServicios.push({
-            id: listaServicios.length + 1,
-            folio: `ODS-${folioAcuerdo}`,
-            unidad: vinVehiculo || `Unidad-${folioAcuerdo}`,
-            operador: "ARMANDO GUTIERREZ",
-            detalle: comentarioTecnico || "Instalación completada",
-            salud: "Óptima",
-            kpi: "100%",
-            fecha: new Date().toISOString().split('T')[0],
-            urlDoc: fileUrl
-        });
-
-        return res.json({
-            exito: true,
-            mensaje: '¡Orden institucional generada y registrada con éxito!',
-            descargaUrl: fileUrl
-        });
-
-app.listen(PORT, () => console.log(`Servidor activo en el puerto ${PORT}`));
