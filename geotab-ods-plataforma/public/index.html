@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flotas - Validación de Unidades Geotab</title>
-    <!-- Tailwind CSS para diseño moderno -->
+    <title>FLOTAS - Validaciones AT&T</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -12,181 +11,226 @@
             theme: {
                 extend: {
                     colors: {
-                        brandDark: '#0b192c',
-                        brandBlue: '#1e3a8a',
-                        brandOrange: '#f97316'
+                        brandOrange: '#f97316',
+                        brandBlue: '#0b192c'
                     }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+<body class="bg-slate-100 text-slate-800 min-h-screen font-sans">
 
-    <!-- CONTENEDOR DE LOGIN -->
-    <div id="login-view" class="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950">
-        <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
-            <!-- Izquierda: Branding -->
-            <div class="p-8 md:p-12 flex flex-col justify-between bg-gradient-to-b from-blue-950/50 to-transparent">
+    <!-- LOGIN VIEW -->
+    <div id="login-view" class="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-950">
+        <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div class="p-8 md:p-12 flex flex-col justify-between bg-slate-900 text-white">
                 <div>
                     <div class="flex items-center space-x-2 mb-6">
                         <i class="fa-solid fa-location-dot text-brandOrange text-2xl"></i>
-                        <span class="text-2xl font-black tracking-wider text-white">FLOTAS</span>
+                        <span class="text-2xl font-black tracking-wider">FLOTAS</span>
                     </div>
-                    <h1 class="text-3xl font-bold text-white mb-3">Validación de unidades</h1>
-                    <p class="text-slate-400 text-sm mb-6">Instalaciones, migraciones y servicios: posición, eventos, relay y evidencias en un solo flujo.</p>
-                    <ul class="space-y-3 text-sm text-slate-300">
-                        <li class="flex items-center"><i class="fa-solid fa-check text-brandOrange mr-2"></i> Pruebas de posición y eventos en vivo</li>
-                        <li class="flex items-center"><i class="fa-solid fa-check text-brandOrange mr-2"></i> Evidencias y reporte en PDF</li>
-                        <li class="flex items-center"><i class="fa-solid fa-check text-brandOrange mr-2"></i> Seguimiento por soporte y coordinación</li>
-                    </ul>
+                    <h1 class="text-3xl font-bold mb-3">Validación de unidades</h1>
+                    <p class="text-slate-400 text-sm mb-6">Instalaciones, migraciones y servicios en un solo flujo.</p>
                 </div>
-                <div class="text-xs text-slate-500 mt-6">Administración de Flotas Geotab</div>
+                <div class="text-xs text-slate-500">Administración de Flotas</div>
             </div>
-
-            <!-- Derecha: Formulario -->
-            <div class="p-8 md:p-12 flex flex-col justify-center bg-slate-900">
-                <h2 class="text-xl font-bold text-white mb-1">Iniciar sesión</h2>
-                <p class="text-xs text-slate-400 mb-6">Entra con tu usuario de Soporte o Coordinador</p>
-                
-                <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+            <div class="p-8 md:p-12 flex flex-col justify-center bg-white">
+                <h2 class="text-xl font-bold text-slate-800 mb-1">Iniciar sesión</h2>
+                <p class="text-xs text-slate-500 mb-6">Acceso para Coordinadores y Soporte</p>
+                <form onsubmit="handleLogin(event)" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Usuario</label>
-                        <input type="text" id="usuario" required class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="cesar.admin">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Usuario</label>
+                        <input type="text" id="usuario" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brandOrange" placeholder="cesar.admin">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-300 mb-1">Contraseña</label>
-                        <input type="password" id="password" required class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="••••••••">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Contraseña</label>
+                        <input type="password" id="password" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brandOrange" placeholder="••••••••">
                     </div>
-                    <button type="submit" class="w-full py-3 bg-brandOrange hover:bg-orange-600 text-white font-semibold rounded-lg shadow-lg transition duration-200">
+                    <button type="submit" class="w-full py-3 bg-brandOrange hover:bg-orange-600 text-white font-semibold rounded-lg shadow transition">
                         Entrar
                     </button>
-                    <div id="login-error" class="text-xs text-red-400 text-center hidden"></div>
+                    <div id="login-error" class="text-xs text-red-500 text-center hidden"></div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- CONTENEDOR DEL PANEL PRINCIPAL (Oculto al inicio) -->
+    <!-- DASHBOARD VIEW -->
     <div id="dashboard-view" class="hidden min-h-screen flex flex-col">
-        <!-- Navbar Superior -->
-        <header class="bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
+        <!-- Top Header -->
+        <header class="bg-slate-900 text-white border-b border-slate-800 px-6 py-3 flex items-center justify-between">
             <div class="flex items-center space-x-6">
                 <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-location-dot text-brandOrange text-xl"></i>
-                    <span class="text-lg font-black tracking-wider text-white">FLOTAS</span>
+                    <span class="text-brandOrange font-black tracking-wider text-xl">FLOTAS</span>
+                    <span class="text-slate-400 text-sm">| Validaciones</span>
                 </div>
-                <nav class="hidden md:flex space-x-4 text-sm font-medium">
-                    <button onclick="switchTab('tab-servicios')" class="tab-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition">Servicios</button>
-                    <button onclick="switchTab('tab-nuevo')" class="tab-btn px-3 py-1.5 rounded-lg text-brandOrange bg-orange-500/10 transition font-semibold">Nuevo servicio</button>
-                    <button onclick="switchTab('tab-kpi')" class="tab-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition">KPI</button>
-                </nav>
+                <div class="bg-blue-600/30 p-1.5 rounded-full">
+                    <i class="fa-solid fa-globe text-blue-400 text-xs"></i>
+                </div>
             </div>
             <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-full bg-brandOrange text-white flex items-center justify-center font-bold text-sm">C</div>
                 <div class="text-right">
-                    <div id="user-display-name" class="text-sm font-bold text-white">Cesar Sanchez</div>
+                    <div class="text-sm font-bold">CESAR SANCHEZ</div>
                     <div class="text-xs text-slate-400">Coordinador AT&T</div>
                 </div>
-                <button onclick="logout()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition" title="Cerrar sesión">
-                    <i class="fa-solid fa-right-from-bracket"></i>
+                <button onclick="logout()" class="ml-4 text-slate-400 hover:text-white" title="Cerrar sesión">
+                    <i class="fa-solid fa-right-from-bracket text-lg"></i>
                 </button>
             </div>
         </header>
 
-        <!-- Contenido Dinámico de las Pestañas -->
-        <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+        <!-- Subheader Navigation Tabs -->
+        <div class="bg-white border-b border-slate-200 px-6 py-2 shadow-sm">
+            <div class="max-w-7xl mx-auto flex space-x-8 text-sm font-semibold">
+                <button onclick="switchTab('tab-servicios')" class="nav-tab pb-2 text-slate-600 hover:text-slate-900 border-b-2 border-transparent">Servicios</button>
+                <button onclick="switchTab('tab-nuevo')" class="nav-tab pb-2 text-slate-900 border-b-2 border-slate-900">Nuevo servicio</button>
+                <button onclick="switchTab('tab-instaladores')" class="nav-tab pb-2 text-slate-600 hover:text-slate-900 border-b-2 border-transparent">Instaladores</button>
+                <button onclick="switchTab('tab-kpi')" class="nav-tab pb-2 text-slate-600 hover:text-slate-900 border-b-2 border-transparent">KPI</button>
+            </div>
+        </div>
 
-            <!-- PESTAÑA 1: LISTA DE SERVICIOS -->
-            <div id="tab-servicios" class="tab-content hidden space-y-6">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-white">Servicios AT&T y Geotab</h2>
-                    <button onclick="loadServicios()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg transition">
-                        <i class="fa-solid fa-rotate mr-1"></i> Actualizar lista
-                    </button>
+        <!-- Main Content Area -->
+        <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+
+            <!-- TAB 1: SERVICIOS -->
+            <div id="tab-servicios" class="tab-pane hidden space-y-4">
+                <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-xs text-emerald-800 flex items-center justify-between">
+                    <span><i class="fa-solid fa-circle text-[8px] text-emerald-500 mr-2"></i> Soporte en turno: Alejandra Nava (07:00–15:00) y Francisco Puente (10:00–18:00)</span>
                 </div>
-                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-slate-950/50 text-slate-400 text-xs border-b border-slate-800">
+                            <tr class="bg-slate-50 text-slate-500 text-xs border-b border-slate-200">
                                 <th class="p-4">FOLIO ACUERDO</th>
                                 <th class="p-4">VISITA</th>
-                                <th class="p-4">CLIENTE / UNIDAD</th>
+                                <th class="p-4">MOTIVO</th>
+                                <th class="p-4">CLIENTE</th>
                                 <th class="p-4">CIUDAD</th>
+                                <th class="p-4">TÉCNICO</th>
                                 <th class="p-4">ESTATUS</th>
                                 <th class="p-4 text-center">ACCIONES</th>
                             </tr>
                         </thead>
-                        <tbody id="tabla-servicios-body" class="divide-y divide-slate-800 text-sm">
-                            <!-- Los registros se cargan dinámicamente -->
+                        <tbody id="tabla-servicios" class="divide-y divide-slate-100 text-sm">
+                            <!-- Dinámico -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- PESTAÑA 2: NUEVO SERVICIO / CAPTURA EN CAMPO -->
-            <div id="tab-nuevo" class="tab-content space-y-6">
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
-                    <h2 class="text-xl font-bold text-white mb-2">Orden de Servicio - Captura en Campo</h2>
-                    <p class="text-xs text-slate-400 mb-6">Registra los datos de instalación y genera el documento PDF oficial de inmediato.</p>
+            <!-- TAB 2: NUEVO SERVICIO -->
+            <div id="tab-nuevo" class="tab-pane space-y-6">
+                <div class="flex space-x-4 border-b border-slate-200 pb-3">
+                    <button class="px-4 py-1.5 bg-slate-900 text-white text-xs font-bold rounded-lg shadow">Uno por uno</button>
+                </div>
 
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
                     <form id="form-ods" onsubmit="generarODS(event)" class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">Folio de Acuerdo *</label>
-                                <input type="text" name="folioAcuerdo" required class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="Ej. 123456789">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Proveedor</label>
+                                <input type="text" value="ADMINISTRACION DE FLOTAS" readonly class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">Número de Serie GO9 *</label>
-                                <input type="text" name="serialGo9" required class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="Ej. G9-998877">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Folio acuerdo *</label>
+                                <input type="text" name="folioAcuerdo" required class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-brandOrange focus:outline-none" placeholder="Ej. REV160725NOR">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">IMEI Cámara</label>
-                                <input type="text" name="imeiCamara" class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="IMEI de la cámara">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Instalador (clave)</label>
+                                <input type="text" value="CS142W" readonly class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">Número de SIM</label>
-                                <input type="text" name="numeroSim" class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="ICCID de la SIM">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">VIN del Vehículo</label>
-                                <input type="text" name="vinVehiculo" class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="17 dígitos VIN">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">Comentario Técnico</label>
-                                <input type="text" name="comentarioTecnico" class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="Instalación sin novedad">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Técnico que hace la visita</label>
+                                <select name="tecnico" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-brandOrange focus:outline-none">
+                                    <option>ARMANDO GUTIERREZ - SUR</option>
+                                    <option>CESAR SANCHEZ - CENTRO</option>
+                                    <option>CARLOS LEAL - NORTE</option>
+                                </select>
                             </div>
                         </div>
 
-                        <button type="submit" id="btn-generar" class="w-full py-3.5 bg-brandOrange hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg transition duration-200">
-                            Generar ODS en PDF y Actualizar Sistema
+                        <div class="border-t border-slate-200 pt-6">
+                            <h3 class="text-sm font-bold text-slate-800 mb-4">Datos generales</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del cliente</label>
+                                    <input type="text" name="cliente" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-brandOrange focus:outline-none" placeholder="BARBARA MEDRANO">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Razón social</label>
+                                    <input type="text" name="razonSocial" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-brandOrange focus:outline-none" placeholder="FRACCIONADORA LA ROMITA">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Lugar de atención</label>
+                                    <input type="text" name="lugarAtencion" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-brandOrange focus:outline-none" placeholder="CALLE 106 X 77 Y 79">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre de quien recibe al técnico</label>
+                                    <input type="text" name="recibe" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-brandOrange focus:outline-none" placeholder="BARBARA MEDRANO">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Números de contacto</label>
+                                    <input type="text" name="contacto" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-brandOrange focus:outline-none" placeholder="4424056296">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Ciudad</label>
+                                    <input type="text" name="ciudad" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-brandOrange focus:outline-none" placeholder="MERIDA">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Estado</label>
+                                    <input type="text" name="estado" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-brandOrange focus:outline-none" placeholder="YUCATAN">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btn-submit" class="px-6 py-2.5 bg-brandOrange hover:bg-orange-600 text-white font-semibold rounded-lg shadow transition">
+                            Enviar al técnico y Generar ODS
                         </button>
                     </form>
 
-                    <!-- Resultado de Generación -->
-                    <div id="resultado-ods" class="mt-6 hidden p-4 bg-emerald-950/50 border border-emerald-800 rounded-xl text-center">
-                        <p class="text-emerald-400 font-semibold mb-2"><i class="fa-solid fa-circle-check mr-2"></i> ¡Orden generada y registrada con éxito!</p>
-                        <a id="link-descarga" href="#" target="_blank" class="inline-flex items-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-lg shadow transition">
-                            <i class="fa-solid fa-download mr-2"></i> Descargar ODS en PDF
+                    <!-- Resultado de generación -->
+                    <div id="resultado-ods" class="mt-6 hidden p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+                        <p class="text-emerald-700 font-semibold mb-2"><i class="fa-solid fa-circle-check mr-2"></i> ¡Orden institucional generada y registrada con éxito!</p>
+                        <a id="link-descarga" href="#" target="_blank" class="inline-flex items-center px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow transition">
+                            <i class="fa-solid fa-download mr-2"></i> Descargar ODS en Word (.docx)
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- PESTAÑA 3: KPI -->
-            <div id="tab-kpi" class="tab-content hidden space-y-6">
-                <h2 class="text-xl font-bold text-white">Métricas y Salud de la Flota</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                        <div class="text-slate-400 text-xs font-semibold uppercase mb-1">Total Instalaciones</div>
-                        <div id="kpi-total" class="text-3xl font-black text-white">0</div>
+            <!-- TAB 3: INSTALADORES -->
+            <div id="tab-instaladores" class="tab-pane hidden space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-800 mb-4">Gestión de Instaladores</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <input type="text" placeholder="Nombre" class="px-4 py-2 border rounded-lg text-sm">
+                        <input type="text" placeholder="Usuario" class="px-4 py-2 border rounded-lg text-sm">
+                        <input type="password" placeholder="Contraseña" class="px-4 py-2 border rounded-lg text-sm">
                     </div>
-                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                        <div class="text-slate-400 text-xs font-semibold uppercase mb-1">Salud Óptima</div>
-                        <div id="kpi-salud" class="text-3xl font-black text-emerald-400">100%</div>
+                    <button class="px-4 py-2 bg-brandOrange text-white text-xs font-bold rounded-lg">Dar de alta</button>
+                </div>
+            </div>
+
+            <!-- TAB 4: KPI -->
+            <div id="tab-kpi" class="tab-pane hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200">
+                        <div class="text-slate-400 text-xs font-bold uppercase">Servicios</div>
+                        <div class="text-2xl font-black text-slate-800 mt-1">7</div>
                     </div>
-                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-                        <div class="text-slate-400 text-xs font-semibold uppercase mb-1">Estatus del Servidor</div>
-                        <div class="text-3xl font-black text-blue-400">En Línea</div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200">
+                        <div class="text-slate-400 text-xs font-bold uppercase">Completados</div>
+                        <div class="text-2xl font-black text-emerald-600 mt-1">3</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200">
+                        <div class="text-slate-400 text-xs font-bold uppercase">En curso</div>
+                        <div class="text-2xl font-black text-blue-600 mt-1">0</div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl border border-slate-200">
+                        <div class="text-slate-400 text-xs font-bold uppercase">Tiempo prom.</div>
+                        <div class="text-2xl font-black text-slate-800 mt-1">14 min</div>
                     </div>
                 </div>
             </div>
@@ -194,82 +238,62 @@
         </main>
     </div>
 
-    <!-- Script de Control Frontend -->
     <script>
-        let authToken = '';
-
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
             document.getElementById(tabId).classList.remove('hidden');
-            
-            if (tabId === 'tab-servicios') {
-                loadServicios();
-            }
+            if(tabId === 'tab-servicios') cargarServicios();
         }
 
         async function handleLogin(e) {
             e.preventDefault();
             const usuario = document.getElementById('usuario').value;
             const password = document.getElementById('password').value;
-            const errDiv = document.getElementById('login-error');
+            const err = document.getElementById('login-error');
 
-            try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ usuario, password })
-                });
-                const data = await res.json();
-
-                if (data.exito) {
-                    authToken = data.token;
-                    document.getElementById('user-display-name').textContent = usuario;
-                    document.getElementById('login-view').classList.add('hidden');
-                    document.getElementById('dashboard-view').classList.remove('hidden');
-                    switchTab('tab-nuevo');
-                } else {
-                    errDiv.textContent = data.error || 'Credenciales incorrectas';
-                    errDiv.classList.remove('hidden');
-                }
-            } catch (err) {
-                errDiv.textContent = 'Error de conexión con el servidor';
-                errDiv.classList.remove('hidden');
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({usuario, password})
+            });
+            const data = await res.json();
+            if(data.exito) {
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('dashboard-view').classList.remove('hidden');
+                switchTab('tab-nuevo');
+            } else {
+                err.textContent = data.error;
+                err.classList.remove('hidden');
             }
         }
 
         function logout() {
-            authToken = '';
             document.getElementById('dashboard-view').classList.add('hidden');
             document.getElementById('login-view').classList.remove('hidden');
         }
 
-        async function loadServicios() {
-            try {
-                const res = await fetch('/api/servicios');
-                const data = await res.json();
-                const tbody = document.getElementById('tabla-servicios-body');
-                tbody.innerHTML = '';
-
-                if (data.success && data.servicios.length > 0) {
-                    data.servicios.forEach(s => {
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-slate-800/50 transition">
-                                <td class="p-4 font-semibold text-white">${s.folio}</td>
-                                <td class="p-4 text-slate-300">${s.fecha}</td>
-                                <td class="p-4 text-slate-300">${s.unidad} (${s.operador})</td>
-                                <td class="p-4 text-slate-300">CDMX</td>
-                                <td class="p-4"><span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-semibold rounded-full">Óptimo</span></td>
-                                <td class="p-4 text-center">
-                                    <span class="text-xs text-slate-500">Registrado</span>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">No hay servicios registrados aún.</td></tr>`;
-                }
-            } catch (err) {
-                console.error("Error al cargar servicios", err);
+        async function cargarServicios() {
+            const res = await fetch('/api/servicios');
+            const data = await res.json();
+            const tbody = document.getElementById('tabla-servicios');
+            tbody.innerHTML = '';
+            if(data.success) {
+                data.servicios.forEach(s => {
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 font-bold text-slate-800">${s.folio}</td>
+                            <td class="p-4 text-slate-600">${s.fecha}</td>
+                            <td class="p-4 text-slate-600">Instalación</td>
+                            <td class="p-4 text-slate-800 font-semibold">${s.unidad}</td>
+                            <td class="p-4 text-slate-600">CDMX</td>
+                            <td class="p-4 text-slate-600">${s.operador}</td>
+                            <td class="p-4"><span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">Completado</span></td>
+                            <td class="p-4 text-center">
+                                <a href="#" class="text-blue-600 hover:text-blue-800"><i class="fa-solid fa-download"></i></a>
+                            </td>
+                        </tr>
+                    `;
+                });
             }
         }
 
@@ -277,41 +301,30 @@
             e.preventDefault();
             const form = document.getElementById('form-ods');
             const formData = new FormData(form);
-            const btn = document.getElementById('btn-generar');
+            const btn = document.getElementById('btn-submit');
             const resultado = document.getElementById('resultado-ods');
             const linkDescarga = document.getElementById('link-descarga');
 
             btn.disabled = true;
-            btn.textContent = "Generando orden y PDF...";
+            btn.textContent = "Generando ODS...";
 
             try {
-                const res = await fetch('/api/generar-ods', {
-                    method: 'POST',
-                    body: formData
-                });
+                const res = await fetch('/api/generar-ods', { method: 'POST', body: formData });
                 const data = await res.json();
-
-                if (data.exito) {
+                if(data.exito) {
                     resultado.classList.remove('hidden');
                     linkDescarga.href = data.descargaUrl;
                     form.reset();
                 } else {
-                    alert('Error: ' + data.error);
+                    alert(data.error);
                 }
-            } catch (err) {
-                alert('Error al procesar la solicitud.');
+            } catch(err) {
+                alert('Error al procesar.');
             } finally {
                 btn.disabled = false;
-                btn.textContent = "Generar ODS en PDF y Actualizar Sistema";
+                btn.textContent = "Enviar al técnico y Generar ODS";
             }
         }
     </script>
-</body>
-</html>
-        console.error("Error cargando servicios", err);
-    }
-}
-cargarServicios();
-</script>
 </body>
 </html>
