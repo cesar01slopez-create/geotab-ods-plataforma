@@ -5,6 +5,7 @@ const express = require('express'), cors = require('cors'), multer = require('mu
 const PORT = process.env.PORT || 3000;
 const DIR = process.env.DATA_DIR || __dirname;          // En Render/Railway apunta a un disco persistente
 const FILE = path.join(DIR, 'db.json'), ODS = path.join(DIR, 'ods');
+const LOGO = path.join(__dirname, 'public', 'logo-att.png');
 const SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 fs.mkdirSync(ODS, { recursive: true });
 
@@ -13,18 +14,19 @@ try { db = JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch (e) {}
 const save = () => fs.writeFileSync(FILE, JSON.stringify(db));
 const t = v => String(v ?? '').trim(), nm = v => t(v).toUpperCase();
 
-// Cuenta del coordinador: si defines ADMIN_PASS, SIEMPRE manda sobre lo guardado (sirve para recuperar el acceso)
+// Cuenta del coordinador.
+// Si defines ADMIN_PASS, esa contraseña manda en cada arranque (sirve para recuperar el acceso).
+// Si no, la cuenta nace con la contraseña inicial y el sistema obliga a cambiarla al entrar.
 const ADMIN_USER = t(process.env.ADMIN_USER || 'cesar.admin').replace(/^["']|["']$/g, '').toLowerCase();
-const ADMIN_PASS = t(process.env.ADMIN_PASS || 'admin123').replace(/^["']|["']$/g, '');   // quita espacios y comillas pegadas por error
-if (ADMIN_PASS) {
-  const hash = bcrypt.hashSync(ADMIN_PASS, 10), c = db.usuarios.find(u => u.usuario === ADMIN_USER);
-  if (c) { c.hash = hash; c.rol = 'coord'; } else db.usuarios.push({ usuario: ADMIN_USER, nombre: 'Cesar Sanchez', rol: 'coord', hash });
+const ENV_PASS = t(process.env.ADMIN_PASS).replace(/^["']|["']$/g, '');
+if (ENV_PASS) {
+  const hash = bcrypt.hashSync(ENV_PASS, 10), c = db.usuarios.find(u => u.usuario === ADMIN_USER);
+  if (c) { c.hash = hash; c.rol = 'coord'; delete c.debeCambiar; } else db.usuarios.push({ usuario: ADMIN_USER, nombre: 'Cesar Sanchez', rol: 'coord', hash });
   save(); console.log('Coordinador listo. Usuario:', ADMIN_USER);
-  if (!process.env.ADMIN_PASS) console.log('AVISO: no definiste ADMIN_PASS; la contraseña es admin123. Defínela en las variables de entorno para cambiarla.');
-} else if (!db.usuarios.some(u => u.rol === 'coord')) {
-  const pass = crypto.randomBytes(5).toString('hex');
-  db.usuarios.push({ usuario: ADMIN_USER, nombre: 'Cesar Sanchez', rol: 'coord', hash: bcrypt.hashSync(pass, 10) });
-  save(); console.log('Usuario del coordinador:', ADMIN_USER, '| Contraseña inicial:', pass);
+} else {
+  if (!db.usuarios.some(u => u.rol === 'coord')) db.usuarios.push({ usuario: ADMIN_USER, nombre: 'Cesar Sanchez', rol: 'coord', hash: bcrypt.hashSync('admin123', 10) });
+  db.usuarios.forEach(u => { if (u.rol === 'coord' && bcrypt.compareSync('admin123', u.hash)) u.debeCambiar = true; });
+  save(); console.log('Coordinador:', ADMIN_USER, '(si aún usa la contraseña inicial, se le pedirá cambiarla al entrar)');
 }
 
 const ok = (res, x = {}) => res.json({ exito: true, success: true, ...x });
@@ -34,23 +36,40 @@ const coord = (req, res, next) => req.u.rol === 'coord' ? next() : bad(res, 403,
 const up = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
 
 const app = express();
+app.set('trust proxy', 1);
+app.use((req, res, next) => { res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'no-referrer' }); next(); });
 app.use(cors()); app.use(express.json({ limit: '2mb' }));
 app.use('/ods', express.static(ODS));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/api/version', (req, res) => res.json({ version: '3.2' }));   // para comprobar que corre el servidor nuevo
+app.get('/api/version', (req, res) => res.json({ version: '3.3' }));   // para comprobar que corre el servidor nuevo
 
 // ---------- Sesión ----------
+const fallos = {};   // límite de intentos: 8 fallos por IP cada 15 minutos
 app.post('/api/login', (req, res) => {
+  const ip = req.ip, f = fallos[ip], vigente = f && Date.now() - f.t < 15 * 60e3;
+  if (vigente && f.n >= 8) return bad(res, 429, 'Demasiados intentos. Espera 15 minutos e inténtalo de nuevo.');
   const u = db.usuarios.find(x => x.usuario === t(req.body.usuario).toLowerCase());
   if (!u || !bcrypt.compareSync(String(req.body.password || ''), u.hash)) {
+    fallos[ip] = { n: vigente ? f.n + 1 : 1, t: Date.now() };
     console.log('Login fallido para "' + t(req.body.usuario) + '". Usuarios existentes:', db.usuarios.map(x => x.usuario).join(', '));
     return bad(res, 401, 'Usuario o contraseña incorrectos');
   }
+  delete fallos[ip];
   const usuario = { usuario: u.usuario, nombre: u.nombre, rol: u.rol };
-  ok(res, { token: jwt.sign(usuario, SECRET, { expiresIn: '12h' }), usuario });
+  ok(res, { token: jwt.sign(usuario, SECRET, { expiresIn: '12h' }), usuario: { ...usuario, debeCambiar: !!u.debeCambiar } });
 });
-app.get('/api/yo', auth, (req, res) => ok(res, { usuario: { usuario: req.u.usuario, nombre: req.u.nombre, rol: req.u.rol } }));
+app.get('/api/yo', auth, (req, res) => {
+  const u = db.usuarios.find(x => x.usuario === req.u.usuario);
+  if (!u) return bad(res, 401, 'Sesión no válida');
+  ok(res, { usuario: { usuario: u.usuario, nombre: u.nombre, rol: u.rol, debeCambiar: !!u.debeCambiar } });
+});
+app.put('/api/yo/password', auth, (req, res) => {
+  const u = db.usuarios.find(x => x.usuario === req.u.usuario), nueva = String(req.body.nueva || '');
+  if (!u || !bcrypt.compareSync(String(req.body.actual || ''), u.hash)) return bad(res, 400, 'La contraseña actual no es correcta');
+  if (nueva.length < 8 || nueva === 'admin123') return bad(res, 400, 'La nueva contraseña debe tener al menos 8 caracteres y no ser la inicial');
+  u.hash = bcrypt.hashSync(nueva, 10); delete u.debeCambiar; save(); ok(res);
+});
 
 // ---------- Instaladores ----------
 app.get('/api/instaladores', auth, coord, (req, res) => ok(res, { instaladores: db.usuarios.filter(u => u.rol === 'tec').map(({ hash, ...u }) => u) }));
@@ -128,7 +147,7 @@ function row(d, a) {
 function dataImg(u) { return u && u.startsWith('data:image') ? Buffer.from(u.split(',')[1], 'base64') : null; }
 
 function renderODS(d, s, files, b) {
-  d.font('Helvetica-Bold').fontSize(9).fillColor(CY).text('AT&T', 40, 40); d.fillColor('#111').font('Helvetica').fontSize(15).text('Orden de servicio de la flotilla', 40, 38, { width: 532, align: 'center' });
+  if (fs.existsSync(LOGO)) d.image(LOGO, 40, 28, { height: 36 }); else d.font('Helvetica-Bold').fontSize(9).fillColor(CY).text('AT&T', 40, 40); d.fillColor('#111').font('Helvetica').fontSize(15).text('Orden de servicio de la flotilla', 40, 38, { width: 532, align: 'center' });
   d.y = 70; d.x = 40;
   row(d, [['Proveedor', s.proveedor], ['Folio acuerdo', s.folio]]); row(d, [['Instalador', s.instalador], ['Fecha de visita', `${s.fecha} ${s.hora || ''}`]]);
   band(d, 'MOTIVO DE LA VISITA');
@@ -183,8 +202,15 @@ app.post('/api/generar-ods', auth, campos, async (req, res) => {
     Object.assign(s, { serie: t(b.serialGo9), imei: t(b.imeiCamara), sim: t(b.numeroSim), arnes: t(b.arnes), marca: t(b.marcaVehiculo), modelo: t(b.modeloVehiculo),
       vin: t(b.vinVehiculo).toUpperCase(), placas: t(b.placasVehiculo).toUpperCase(), comentario: t(b.comentarioTecnico) });
     const name = `ODS_${s.folio.replace(/[^\w-]/g, '')}_${crypto.randomBytes(4).toString('hex')}.pdf`;
-    const doc = new PDFDocument({ size: 'LETTER', margin: 40 }), out = fs.createWriteStream(path.join(ODS, name));
-    doc.pipe(out); renderODS(doc, s, agrupa(req.files), b); doc.end();
+    const doc = new PDFDocument({ size: 'LETTER', margin: 40, bufferPages: true }), out = fs.createWriteStream(path.join(ODS, name));
+    doc.pipe(out); renderODS(doc, s, agrupa(req.files), b);
+    const rg = doc.bufferedPageRange(), gen = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+    for (let i = 0; i < rg.count; i++) {
+      doc.switchToPage(i); const mb = doc.page.margins.bottom; doc.page.margins.bottom = 0;
+      doc.font('Helvetica').fontSize(8).fillColor('#888').text(`${s.folio}  ·  Página ${i + 1} de ${rg.count}  ·  Generado el ${gen}`, 40, 760, { width: 532, align: 'center', lineBreak: false });
+      doc.page.margins.bottom = mb;
+    }
+    doc.end();
     await new Promise((r, j) => { out.on('finish', r); out.on('error', j); });
     s.estatus = 'Completado'; s.urlDoc = '/ods/' + name; save();
     ok(res, { descargaUrl: s.urlDoc });
