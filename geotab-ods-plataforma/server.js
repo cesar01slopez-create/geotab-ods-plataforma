@@ -266,4 +266,26 @@ app.get('/', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+const hostUrl = req.protocol + '://' + req.get('host');
+        const fileUrl = `${hostUrl}/${outputFilename}`;
+
+        // Registrar en el historial para que aparezca en la tabla con su link real
+        listaServicios.push({
+            id: listaServicios.length + 1,
+            folio: `ODS-${folioAcuerdo}`,
+            unidad: vinVehiculo || `Unidad-${folioAcuerdo}`,
+            operador: "ARMANDO GUTIERREZ",
+            detalle: comentarioTecnico || "Instalación completada",
+            salud: "Óptima",
+            kpi: "100%",
+            fecha: new Date().toISOString().split('T')[0],
+            urlDoc: fileUrl
+        });
+
+        return res.json({
+            exito: true,
+            mensaje: '¡Orden institucional generada y registrada con éxito!',
+            descargaUrl: fileUrl
+        });
+
 app.listen(PORT, () => console.log(`Servidor activo en el puerto ${PORT}`));
