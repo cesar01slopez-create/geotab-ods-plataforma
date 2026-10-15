@@ -11,7 +11,6 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 const app = express();
-const upload = multer({ dest: 'uploads/' });
 app.use(express.json());
 app.use(cors());
 
