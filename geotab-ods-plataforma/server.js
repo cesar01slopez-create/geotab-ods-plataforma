@@ -85,7 +85,7 @@ app.post('/api/usuarios/crear', verificarAdmin, (req, res) => {
     res.json({ exito: true, mensaje: `Usuario '${nuevoUsuario}' creado correctamente como ${rol}.` });
 });
 
-// --- RUTA 2: GENERAR ODS (Autónoma) ---
+// --- RUTA 2: GENERAR ODS (Blindada y Autónoma) ---
 app.post('/api/generar-ods', upload.fields([
     { name: 'foto_adherible', maxCount: 1 },
     { name: 'foto_imei_camara', maxCount: 1 },
@@ -97,13 +97,16 @@ app.post('/api/generar-ods', upload.fields([
         const { folioAcuerdo, serialGo9, imeiCamara, numeroSim, vinVehiculo, comentarioTecnico } = req.body;
         if (!folioAcuerdo) return res.status(400).json({ exito: false, error: 'El folio de acuerdo es obligatorio.' });
 
-        // Intentar usar la plantilla Word si existe, de lo contrario continuar de forma totalmente autónoma
-        const templatePath = path.join(__dirname, 'plantilla_base.docx');
-        let outputFilename = `ODS_${folioAcuerdo}_${Date.now()}.docx`;
         const publicDir = path.join(__dirname, 'public');
         if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir);
 
+        const outputFilename = `ODS_${folioAcuerdo}_${Date.now()}.docx`;
+        const outputPath = path.join(publicDir, outputFilename);
+
+        const templatePath = path.join(__dirname, 'plantilla_base.docx');
+
         if (fs.existsSync(templatePath)) {
+            // Si existe la plantilla Word, la procesamos con Docxtemplater
             const content = fs.readFileSync(templatePath, 'binary');
             const zip = new PizZip(content);
             const doc = new Docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
@@ -129,10 +132,20 @@ app.post('/api/generar-ods', upload.fields([
 
             doc.render();
             const buf = doc.getZip().generate({ type: 'nodebuffer' });
-            fs.writeFileSync(path.join(publicDir, outputFilename), buf);
+            fs.writeFileSync(outputPath, buf);
+        } else {
+            // Si no existe la plantilla base, creamos un documento Word alternativo autónomo para evitar errores
+            const header = "<w:p><w:r><w:t>ORDEN DE SERVICIO - GEOTAB ODS</w:t></w:r></w:p>";
+            const body = `<w:p><w:r><w:t>Folio: ${folioAcuerdo} | VIN: ${vinVehiculo || 'N/A'} | Serie GO9: ${serialGo9 || 'N/A'}</w:t></w:r></w:p>`;
+            const dummyDoc = `<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${header}${body}</w:body></w:document>`;
+            
+            const zip = new PizZip();
+            zip.file("word/document.xml", dummyDoc);
+            const buf = zip.generate({ type: 'nodebuffer' });
+            fs.writeFileSync(outputPath, buf);
         }
 
-        // Registrar de forma autónoma en el historial y lista de servicios
+        // Registrar en memoria autónoma
         historialInstalaciones.push({
             fecha: new Date().toISOString().split('T')[0],
             eco: vinVehiculo || `ECO-${folioAcuerdo}`,
@@ -154,8 +167,8 @@ app.post('/api/generar-ods', upload.fields([
         const hostUrl = req.protocol + '://' + req.get('host');
         return res.json({
             exito: true,
-            mensaje: '¡Orden generada y registrada con éxito en el sistema autónomo!',
-            descargaUrl: fs.existsSync(path.join(publicDir, outputFilename)) ? `${hostUrl}/public/${outputFilename}` : null
+            mensaje: '¡Orden generada y registrada con éxito!',
+            descargaUrl: `${hostUrl}/public/${outputFilename}`
         });
 
     } catch (error) {
