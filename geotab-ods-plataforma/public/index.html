@@ -3,379 +3,311 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plataforma Integral ODS & KPIs Geotab</title>
+    <title>Flotas - Validación de Unidades Geotab</title>
+    <!-- Tailwind CSS para diseño moderno -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="bg-gray-100 font-sans p-4 md:p-8">
-
-    <!-- LOGIN INICIAL -->
-    <div id="loginSection" class="max-w-md mx-auto bg-white p-6 rounded-lg shadow mt-16">
-        <h2 class="text-2xl font-bold mb-4 text-gray-800 text-center">Acceso - Flotas Geotab</h2>
-        <form id="loginForm" class="space-y-4">
-            <div>
-                <label class="block text-sm font-semibold mb-1">Usuario</label>
-                <input type="text" id="usuario" required class="w-full border rounded p-2" placeholder="cesar.admin o tecnico.campo">
-            </div>
-            <div>
-                <label class="block text-sm font-semibold mb-1">Contraseña</label>
-                <input type="password" id="password" required class="w-full border rounded p-2">
-            </div>
-            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition">Ingresar</button>
-        </form>
-    </div>
-
-    <!-- APLICACIÓN PRINCIPAL -->
-    <div id="appSection" class="max-w-5xl mx-auto space-y-8 hidden">
-        
-        <!-- ENCABEZADO -->
-        <div class="bg-white p-6 rounded-lg shadow flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Administración de Flotas - Geotab & AT&T</h1>
-                <p class="text-sm text-gray-500" id="rolUsuarioLogueado">Rol: --</p>
-            </div>
-            <button onclick="cerrarSesion()" class="bg-red-500 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-red-600">Cerrar Sesión</button>
-        </div>
-
-        <!-- DASHBOARD DE KPIS Y GESTIÓN DE USUARIOS (Visible solo para Admins) -->
-        <div id="dashboardAdmin" class="space-y-6 hidden">
-            <!-- Tarjetas de KPIs -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
-                    <p class="text-gray-500 text-sm">Total Servicios</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="kpiTotal">--</h3>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
-                    <p class="text-gray-500 text-sm">Salud Óptima (GPS)</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="kpiSalud">--%</h3>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
-                    <p class="text-gray-500 text-sm">En Revisión</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="kpiRevision">--</h3>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-red-500">
-                    <p class="text-gray-500 text-sm">Unidades Ciegas</p>
-                    <h3 class="text-2xl font-bold text-gray-800" id="kpiCiegas">0</h3>
-                </div>
-            </div>
-
-            <!-- PANEL PARA CREAR NUEVOS USUARIOS -->
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h3 class="text-lg font-bold text-gray-800 mb-3 border-b pb-2">Registrar Nuevo Usuario / Técnico</h3>
-                <form id="crearUsuarioForm" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                    <div>
-                        <label class="block text-xs font-semibold mb-1">Nombre de Usuario</label>
-                        <input type="text" id="nuevoUsuario" required class="w-full border rounded p-2 text-sm" placeholder="ej. tecnico.carlos">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold mb-1">Contraseña</label>
-                        <input type="password" id="nuevaPassword" required class="w-full border rounded p-2 text-sm" placeholder="Contraseña">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold mb-1">Rol</label>
-                        <select id="nuevoRol" class="w-full border rounded p-2 text-sm bg-white">
-                            <option value="tecnico">Técnico en Campo</option>
-                            <option value="admin">Administrador / Coordinador</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="bg-green-600 text-white font-bold py-2 px-4 rounded text-sm hover:bg-green-700 transition">
-                        Crear Usuario
-                    </button>
-                </form>
-                <div id="resultadoUsuario" class="mt-2 text-sm font-semibold"></div>
-            </div>
-        </div>
-
-        <!-- FORMULARIO DE ODS Y FOTOS -->
-        <div class="bg-white p-6 md:p-8 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Orden de Servicio - Captura en Campo</h2>
-            
-            <form id="odsForm" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block font-semibold text-sm mb-1">Folio de Acuerdo *</label>
-                        <input type="text" id="folioAcuerdo" required class="w-full border rounded p-2" placeholder="Ej. 3873031757-3">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-sm mb-1">Número de Serie GO9 *</label>
-                        <input type="text" id="serialGo9" required class="w-full border rounded p-2" placeholder="Ej. G9-5NK-M87">
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block font-semibold text-sm mb-1">IMEI Cámara</label>
-                        <input type="text" id="imeiCamara" class="w-full border rounded p-2">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-sm mb-1">Número de SIM</label>
-                        <input type="text" id="numeroSim" class="w-full border rounded p-2">
-                    </div>
-                    <div>
-                        <label class="block font-semibold text-sm mb-1">VIN del Vehículo</label>
-                        <input type="text" id="vinVehiculo" class="w-full border rounded p-2">
-                    </div>
-                </div>
-
-                <!-- EVIDENCIAS FOTOGRÁFICAS -->
-                <div class="bg-gray-50 p-4 rounded border">
-                    <h3 class="font-semibold text-sm text-gray-700 mb-2">Evidencias Fotográficas Obligatorias:</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                        <div><label>Adhesivo GO9:</label><input type="file" id="foto_adherible" accept="image/*" capture="environment" class="w-full mt-1"></div>
-                        <div><label>IMEI/SIM Cámara:</label><input type="file" id="foto_imei_camara" accept="image/*" capture="environment" class="w-full mt-1"></div>
-                        <div><label>VIN Vehículo:</label><input type="file" id="foto_vin" accept="image/*" capture="environment" class="w-full mt-1"></div>
-                        <div><label>Tablero:</label><input type="file" id="foto_tablero" accept="image/*" capture="environment" class="w-full mt-1"></div>
-                        <div><label>Arnés 16 Pines:</label><input type="file" id="foto_arnes" accept="image/*" capture="environment" class="w-full mt-1"></div>
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded hover:bg-blue-700 transition">
-                    Generar ODS en Word y Actualizar Sistema
-                </button>
-            </form>
-
-            <div id="resultado" class="mt-4 p-4 rounded hidden"></div>
-        </div>
-
-    </div>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            const token = localStorage.getItem('token');
-            const rol = localStorage.getItem('rol');
-            if (token) mostrarApp(rol);
-        });
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandDark: '#0b192c',
+                        brandBlue: '#1e3a8a',
+                        brandOrange: '#f97316'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    <!-- CONTENEDOR DE LOGIN -->
+    <div id="login-view" class="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950">
+        <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-slate-900/80 backdrop-blur border border-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Izquierda: Branding -->
+            <div class="p-8 md:p-12 flex flex-col justify-between bg-gradient-to-b from-blue-950/50 to-transparent">
+                <div>
+                    <div class="flex items-center space-x-2 mb-6">
+                        <i class="fa-solid fa-location-dot text-brandOrange text-2xl"></i>
+                        <span class="text-2xl font-black tracking-wider text-white">FLOTAS</span>
+                    </div>
+                    <h1 class="text-3xl font-bold text-white mb-3">Validación de unidades</h1>
+                    <p class="text-slate-400 text-sm mb-6">Instalaciones, migraciones y servicios: posición, eventos, relay y evidencias en un solo flujo.</p>
+                    <ul class="space-y-3 text-sm text-slate-300">
+                        <li class="flex items-center"><i class="fa-solid fa-check text-brandOrange mr-2"></i> Pruebas de posición y eventos en vivo</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-brandOrange mr-2"></i> Evidencias y reporte en PDF</li>
+                        <li class="flex items-center"><i class="fa-solid fa-check text-brandOrange mr-2"></i> Seguimiento por soporte y coordinación</li>
+                    </ul>
+                </div>
+                <div class="text-xs text-slate-500 mt-6">Administración de Flotas Geotab</div>
+            </div>
+
+            <!-- Derecha: Formulario -->
+            <div class="p-8 md:p-12 flex flex-col justify-center bg-slate-900">
+                <h2 class="text-xl font-bold text-white mb-1">Iniciar sesión</h2>
+                <p class="text-xs text-slate-400 mb-6">Entra con tu usuario de Soporte o Coordinador</p>
+                
+                <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Usuario</label>
+                        <input type="text" id="usuario" required class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="cesar.admin">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Contraseña</label>
+                        <input type="password" id="password" required class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-brandOrange hover:bg-orange-600 text-white font-semibold rounded-lg shadow-lg transition duration-200">
+                        Entrar
+                    </button>
+                    <div id="login-error" class="text-xs text-red-400 text-center hidden"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR DEL PANEL PRINCIPAL (Oculto al inicio) -->
+    <div id="dashboard-view" class="hidden min-h-screen flex flex-col">
+        <!-- Navbar Superior -->
+        <header class="bg-slate-950 border-b border-slate-800 px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-location-dot text-brandOrange text-xl"></i>
+                    <span class="text-lg font-black tracking-wider text-white">FLOTAS</span>
+                </div>
+                <nav class="hidden md:flex space-x-4 text-sm font-medium">
+                    <button onclick="switchTab('tab-servicios')" class="tab-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition">Servicios</button>
+                    <button onclick="switchTab('tab-nuevo')" class="tab-btn px-3 py-1.5 rounded-lg text-brandOrange bg-orange-500/10 transition font-semibold">Nuevo servicio</button>
+                    <button onclick="switchTab('tab-kpi')" class="tab-btn px-3 py-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition">KPI</button>
+                </nav>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div class="text-right">
+                    <div id="user-display-name" class="text-sm font-bold text-white">Cesar Sanchez</div>
+                    <div class="text-xs text-slate-400">Coordinador AT&T</div>
+                </div>
+                <button onclick="logout()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white transition" title="Cerrar sesión">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Contenido Dinámico de las Pestañas -->
+        <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+
+            <!-- PESTAÑA 1: LISTA DE SERVICIOS -->
+            <div id="tab-servicios" class="tab-content hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-white">Servicios AT&T y Geotab</h2>
+                    <button onclick="loadServicios()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg transition">
+                        <i class="fa-solid fa-rotate mr-1"></i> Actualizar lista
+                    </button>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950/50 text-slate-400 text-xs border-b border-slate-800">
+                                <th class="p-4">FOLIO ACUERDO</th>
+                                <th class="p-4">VISITA</th>
+                                <th class="p-4">CLIENTE / UNIDAD</th>
+                                <th class="p-4">CIUDAD</th>
+                                <th class="p-4">ESTATUS</th>
+                                <th class="p-4 text-center">ACCIONES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-servicios-body" class="divide-y divide-slate-800 text-sm">
+                            <!-- Los registros se cargan dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 2: NUEVO SERVICIO / CAPTURA EN CAMPO -->
+            <div id="tab-nuevo" class="tab-content space-y-6">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
+                    <h2 class="text-xl font-bold text-white mb-2">Orden de Servicio - Captura en Campo</h2>
+                    <p class="text-xs text-slate-400 mb-6">Registra los datos de instalación y genera el documento PDF oficial de inmediato.</p>
+
+                    <form id="form-ods" onsubmit="generarODS(event)" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Folio de Acuerdo *</label>
+                                <input type="text" name="folioAcuerdo" required class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="Ej. 123456789">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Número de Serie GO9 *</label>
+                                <input type="text" name="serialGo9" required class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="Ej. G9-998877">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">IMEI Cámara</label>
+                                <input type="text" name="imeiCamara" class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="IMEI de la cámara">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Número de SIM</label>
+                                <input type="text" name="numeroSim" class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="ICCID de la SIM">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">VIN del Vehículo</label>
+                                <input type="text" name="vinVehiculo" class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="17 dígitos VIN">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-300 mb-1">Comentario Técnico</label>
+                                <input type="text" name="comentarioTecnico" class="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-brandOrange" placeholder="Instalación sin novedad">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btn-generar" class="w-full py-3.5 bg-brandOrange hover:bg-orange-600 text-white font-bold rounded-xl shadow-lg transition duration-200">
+                            Generar ODS en PDF y Actualizar Sistema
+                        </button>
+                    </form>
+
+                    <!-- Resultado de Generación -->
+                    <div id="resultado-ods" class="mt-6 hidden p-4 bg-emerald-950/50 border border-emerald-800 rounded-xl text-center">
+                        <p class="text-emerald-400 font-semibold mb-2"><i class="fa-solid fa-circle-check mr-2"></i> ¡Orden generada y registrada con éxito!</p>
+                        <a id="link-descarga" href="#" target="_blank" class="inline-flex items-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-lg shadow transition">
+                            <i class="fa-solid fa-download mr-2"></i> Descargar ODS en PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 3: KPI -->
+            <div id="tab-kpi" class="tab-content hidden space-y-6">
+                <h2 class="text-xl font-bold text-white">Métricas y Salud de la Flota</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <div class="text-slate-400 text-xs font-semibold uppercase mb-1">Total Instalaciones</div>
+                        <div id="kpi-total" class="text-3xl font-black text-white">0</div>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <div class="text-slate-400 text-xs font-semibold uppercase mb-1">Salud Óptima</div>
+                        <div id="kpi-salud" class="text-3xl font-black text-emerald-400">100%</div>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                        <div class="text-slate-400 text-xs font-semibold uppercase mb-1">Estatus del Servidor</div>
+                        <div class="text-3xl font-black text-blue-400">En Línea</div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script de Control Frontend -->
+    <script>
+        let authToken = '';
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+            
+            if (tabId === 'tab-servicios') {
+                loadServicios();
+            }
+        }
+
+        async function handleLogin(e) {
             e.preventDefault();
             const usuario = document.getElementById('usuario').value;
             const password = document.getElementById('password').value;
-
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ usuario, password })
-            });
-            const data = await res.json();
-
-            if (data.exito) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('rol', data.rol);
-                mostrarApp(data.rol);
-            } else {
-                alert(data.error);
-            }
-        });
-
-        function mostrarApp(rol) {
-            document.getElementById('loginSection').style.display = 'none';
-            document.getElementById('appSection').style.display = 'block';
-            document.getElementById('rolUsuarioLogueado').innerText = `Rol activo: ${rol.toUpperCase()}`;
-
-            if (rol === 'admin') {
-                document.getElementById('dashboardAdmin').style.display = 'block';
-                cargarKPIs(localStorage.getItem('token'));
-            }
-        }
-
-        function cerrarSesion() {
-            localStorage.clear();
-            location.reload();
-        }
-
-        async function cargarKPIs(token) {
-            try {
-                const res = await fetch('/api/kpis', { headers: { 'Authorization': `Bearer ${token}` } });
-                const data = await res.json();
-                if (res.ok) {
-                    document.getElementById('kpiTotal').innerText = data.totalInstalaciones;
-                    document.getElementById('kpiSalud').innerText = data.saludOptimaPct + '%';
-                    document.getElementById('kpiRevision').innerText = data.enRevision;
-                    document.getElementById('kpiCiegas').innerText = data.ciegas;
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        // Crear Usuario desde el panel
-        document.getElementById('crearUsuarioForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const nuevoUsuario = document.getElementById('nuevoUsuario').value;
-            const nuevaPassword = document.getElementById('nuevaPassword').value;
-            const rol = document.getElementById('nuevoRol').value;
-            const resDiv = document.getElementById('resultadoUsuario');
+            const errDiv = document.getElementById('login-error');
 
             try {
-                const res = await fetch('/api/usuarios/crear', {
+                const res = await fetch('/api/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify({ nuevoUsuario, nuevaPassword, rol })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, password })
                 });
                 const data = await res.json();
 
                 if (data.exito) {
-                    resDiv.className = "mt-2 text-sm font-semibold text-green-600";
-                    resDiv.innerText = data.mensaje;
-                    document.getElementById('crearUsuarioForm').reset();
+                    authToken = data.token;
+                    document.getElementById('user-display-name').textContent = usuario;
+                    document.getElementById('login-view').classList.add('hidden');
+                    document.getElementById('dashboard-view').classList.remove('hidden');
+                    switchTab('tab-nuevo');
                 } else {
-                    resDiv.className = "mt-2 text-sm font-semibold text-red-600";
-                    resDiv.innerText = data.error;
+                    errDiv.textContent = data.error || 'Credenciales incorrectas';
+                    errDiv.classList.remove('hidden');
                 }
             } catch (err) {
-                resDiv.className = "mt-2 text-sm font-semibold text-red-600";
-                resDiv.innerText = "Error de red al registrar usuario.";
+                errDiv.textContent = 'Error de conexión con el servidor';
+                errDiv.classList.remove('hidden');
             }
-        });
+        }
 
-        // Envío de ODS
-        document.getElementById('odsForm').addEventListener('submit', async (e) => {
+        function logout() {
+            authToken = '';
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+        }
+
+        async function loadServicios() {
+            try {
+                const res = await fetch('/api/servicios');
+                const data = await res.json();
+                const tbody = document.getElementById('tabla-servicios-body');
+                tbody.innerHTML = '';
+
+                if (data.success && data.servicios.length > 0) {
+                    data.servicios.forEach(s => {
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-800/50 transition">
+                                <td class="p-4 font-semibold text-white">${s.folio}</td>
+                                <td class="p-4 text-slate-300">${s.fecha}</td>
+                                <td class="p-4 text-slate-300">${s.unidad} (${s.operador})</td>
+                                <td class="p-4 text-slate-300">CDMX</td>
+                                <td class="p-4"><span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-semibold rounded-full">Óptimo</span></td>
+                                <td class="p-4 text-center">
+                                    <span class="text-xs text-slate-500">Registrado</span>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500">No hay servicios registrados aún.</td></tr>`;
+                }
+            } catch (err) {
+                console.error("Error al cargar servicios", err);
+            }
+        }
+
+        async function generarODS(e) {
             e.preventDefault();
-            const resDiv = document.getElementById('resultado');
-            resDiv.classList.remove('hidden');
-            resDiv.className = "mt-4 p-4 bg-gray-200 text-gray-800 rounded";
-            resDiv.innerHTML = "Generando orden de servicio...";
+            const form = document.getElementById('form-ods');
+            const formData = new FormData(form);
+            const btn = document.getElementById('btn-generar');
+            const resultado = document.getElementById('resultado-ods');
+            const linkDescarga = document.getElementById('link-descarga');
 
-            const formData = new FormData();
-            formData.append('folioAcuerdo', document.getElementById('folioAcuerdo').value);
-            formData.append('serialGo9', document.getElementById('serialGo9').value);
-            formData.append('imeiCamara', document.getElementById('imeiCamara').value);
-            formData.append('numeroSim', document.getElementById('numeroSim').value);
-            formData.append('vinVehiculo', document.getElementById('vinVehiculo').value);
-
-            ['foto_adherible', 'foto_imei_camara', 'foto_vin', 'foto_tablero', 'foto_arnes'].forEach(id => {
-                const f = document.getElementById(id).files[0];
-                if (f) formData.append(id, f);
-            });
+            btn.disabled = true;
+            btn.textContent = "Generando orden y PDF...";
 
             try {
-                const response = await fetch('/api/generar-ods', { method: 'POST', body: formData });
-                const result = await response.json();
+                const res = await fetch('/api/generar-ods', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
 
-                if (result.exito) {
-                    resDiv.className = "mt-4 p-4 bg-green-100 text-green-800 rounded";
-                    resDiv.innerHTML = `<strong>¡Éxito!</strong> ${result.mensaje}<br><br><a href="${result.descargaUrl}" download class="bg-green-600 text-white px-4 py-2 rounded font-bold inline-block">Descargar ODS (.docx)</a>`;
-                    if (localStorage.getItem('rol') === 'admin') cargarKPIs(localStorage.getItem('token'));
+                if (data.exito) {
+                    resultado.classList.remove('hidden');
+                    linkDescarga.href = data.descargaUrl;
+                    form.reset();
                 } else {
-                    resDiv.className = "mt-4 p-4 bg-red-100 text-red-800 rounded";
-                    resDiv.innerHTML = `<strong>Error:</strong> ${result.error}`;
+                    alert('Error: ' + data.error);
                 }
             } catch (err) {
-                resDiv.className = "mt-4 p-4 bg-red-100 text-red-800 rounded";
-                resDiv.innerHTML = `<strong>Error de Red.</strong>`;
+                alert('Error al procesar la solicitud.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Generar ODS en PDF y Actualizar Sistema";
             }
-        });
+        }
     </script>
-<!-- Sección de Carga Masiva y Reportes -->
-<div class="bg-white p-6 rounded-lg shadow-md mb-6">
-    <h3 class="text-lg font-bold text-gray-800 mb-4">Gestión Masiva y Reportes</h3>
-    <div class="flex flex-wrap gap-4 items-center">
-        <form id="formMasivo" class="flex items-center gap-2">
-            <input type="file" id="excelFile" accept=".xlsx, .xls" class="border p-2 rounded text-sm" required>
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-semibold">
-                📁 Carga Masiva Excel
-            </button>
-        </form>
-        <button onclick="window.location.href='/api/exportar/excel'" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm font-semibold">
-            📊 Descargar Reporte KPIs y Salud (.XLSX)
-        </button>
-    </div>
-</div>
-
-<script>
-document.getElementById('formMasivo').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const fileInput = document.getElementById('excelFile');
-    const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
-
-    try {
-        const response = await fetch('/api/servicios/masivo', { method: 'POST', body: formData });
-        const result = await response.json();
-        if (result.success) {
-            alert(result.message);
-            fileInput.value = '';
-        } else {
-            alert('Error: ' + result.error);
-        }
-    } catch (err) {
-        console.error(err);
-        alert('Error al conectar con el servidor.');
-    }
-});
-</script>
-<!-- Modal / Formato ODS para PDF -->
-<div id="odsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-3xl p-8 rounded-lg shadow-lg relative">
-        <h1 class="text-2xl font-bold text-blue-900 mb-2">GEOTAB - Orden de Servicio (ODS)</h1>
-        <p class="text-sm text-gray-500 mb-6">Folio: ODS-2026-001 | Fecha: 15/10/2026</p>
-        
-        <div class="border-t border-b py-4 my-4 text-sm space-y-2">
-            <p><strong>Vehículo:</strong> Unit-01</p>
-            <p><strong>Diagnóstico:</strong> Mantenimiento preventivo general y revisión de telemetría.</p>
-        </div>
-
-        <div class="flex justify-end gap-3 mt-6">
-            <button onclick="document.getElementById('odsModal').classList.add('hidden')" class="bg-gray-400 text-white px-4 py-2 rounded text-sm">Cerrar</button>
-            <button onclick="window.print()" class="bg-blue-600 text-white px-5 py-2 rounded text-sm font-semibold">🖨️ Guardar como PDF</button>
-        </div>
-    </div>
-</div>
-<!-- Panel de Control Autónomo de Servicios -->
-<div class="bg-white p-6 rounded-lg shadow-md mb-6">
-    <h3 class="text-lg font-bold text-gray-800 mb-4">Registro y Control Autónomo de Servicios</h3>
-    
-    <!-- Formulario para agregar un servicio manual -->
-    <form id="formNuevoServicio" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <input type="text" id="inputUnidad" placeholder="Unidad (Ej. Unit-02)" class="border p-2 rounded text-sm" required>
-        <input type="text" id="inputOperador" placeholder="Nombre del Operador" class="border p-2 rounded text-sm" required>
-        <input type="text" id="inputDetalle" placeholder="Diagnóstico / Actividad" class="border p-2 rounded text-sm" required>
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm font-semibold col-span-full">
-            ➕ Registrar Nuevo Servicio en el Sistema
-        </button>
-    </form>
-</div>
-
-<script>
-// Función para registrar servicio de forma autónoma
-document.getElementById('formNuevoServicio').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const datos = {
-        unidad: document.getElementById('inputUnidad').value,
-        operador: document.getElementById('inputOperador').value,
-        detalle: document.getElementById('inputDetalle').value
-    };
-
-    try {
-        const response = await fetch('/api/servicios', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datos)
-        });
-        const result = await response.json();
-        if (result.success) {
-            alert(result.message);
-            document.getElementById('formNuevoServicio').reset();
-            cargarServicios(); // Actualizar tabla si la tienes
-        } else {
-            alert('Error al registrar.');
-        }
-    } catch (err) {
-        console.error(err);
-    }
-});
-
-// Función para consultar los servicios autónomos del servidor
-async function cargarServicios() {
-    try {
-        const response = await fetch('/api/servicios');
-        const data = await response.json();
-        if(data.success) {
-            console.log("Servicios autónomos cargados:", data.servicios);
-            // Aquí puedes pintar los datos en tu tabla HTML existente
-        }
-    } catch (err) {
+</body>
+</html>
         console.error("Error cargando servicios", err);
     }
 }
