@@ -1,618 +1,328 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FLOTAS - Validaciones Geotab y AT&T</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brandOrange: '#f97316',
-                        brandBlueDark: '#0b192c'
-                    }
-                }
-            }
-        }
-    </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLOTAS - Validaciones Geotab y AT&T</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script>tailwind.config={theme:{extend:{colors:{brandOrange:'#f97316',brandBlueDark:'#0b192c'}}}}</script>
+<style>canvas{touch-action:none}.inp{width:100%;padding:.55rem 1rem;border:1px solid #cbd5e1;border-radius:.5rem;font-size:.875rem;background:#fff}.inp:focus{outline:2px solid #f97316;outline-offset:0}.lbl{display:block;font-size:.75rem;font-weight:600;color:#475569;margin-bottom:.25rem}</style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen font-sans">
 
-    <!-- LOGIN -->
-    <div id="login-view" class="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950">
-        <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-white rounded-2xl shadow-2xl overflow-hidden">
-            <div class="p-8 md:p-12 flex flex-col justify-between bg-slate-900 text-white">
-                <div>
-                    <div class="flex items-center space-x-2 mb-6">
-                        <i class="fa-solid fa-location-dot text-brandOrange text-2xl"></i>
-                        <span class="text-2xl font-black tracking-wider">FLOTAS</span>
-                    </div>
-                    <h1 class="text-3xl font-bold mb-3">Validación de unidades</h1>
-                    <p class="text-slate-400 text-sm mb-6">Instalaciones, migraciones, posición, eventos y evidencias en un solo flujo.</p>
-                </div>
-                <div class="text-xs text-slate-500">Administración de Flotas Geotab</div>
-            </div>
-            <div class="p-8 md:p-12 flex flex-col justify-center bg-white">
-                <h2 class="text-xl font-bold text-slate-800 mb-1">Iniciar sesión</h2>
-                <p class="text-xs text-slate-500 mb-6">Acceso autorizado por rol</p>
-                <form onsubmit="handleLogin(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Usuario</label>
-                        <input type="text" id="usuario" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brandOrange" placeholder="cesar.admin o armando.gutierrez">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">Contraseña</label>
-                        <input type="password" id="password" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brandOrange" placeholder="••••••••">
-                    </div>
-                    <button type="submit" class="w-full py-3 bg-brandOrange hover:bg-orange-600 text-white font-semibold rounded-lg shadow transition">
-                        Entrar
-                    </button>
-                    <div id="login-error" class="text-xs text-red-500 text-center hidden"></div>
-                </form>
-            </div>
-        </div>
+<!-- LOGIN -->
+<div id="login-view" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950">
+ <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 bg-white rounded-2xl shadow-2xl overflow-hidden">
+  <div class="p-8 md:p-12 flex flex-col justify-between bg-slate-900 text-white">
+   <div>
+    <div class="flex items-center space-x-2 mb-6"><i class="fa-solid fa-location-dot text-brandOrange text-2xl"></i><span class="text-2xl font-black tracking-wider">FLOTAS</span></div>
+    <h1 class="text-3xl font-bold mb-3">Validación de unidades</h1>
+    <p class="text-slate-400 text-sm mb-6">Instalaciones, migraciones, posición, eventos y evidencias en un solo flujo.</p>
+   </div>
+   <div class="text-xs text-slate-500">Administración de Flotas Geotab</div>
+  </div>
+  <div class="p-8 md:p-12 flex flex-col justify-center">
+   <h2 class="text-xl font-bold mb-1">Iniciar sesión</h2>
+   <p class="text-xs text-slate-500 mb-6">Acceso autorizado por rol</p>
+   <form onsubmit="handleLogin(event)" class="space-y-4">
+    <div><label class="lbl">Usuario</label><input id="usuario" required autocapitalize="none" autocomplete="username" class="inp" placeholder="usuario"></div>
+    <div><label class="lbl">Contraseña</label><input id="password" type="password" required autocomplete="current-password" class="inp" placeholder="••••••••"></div>
+    <button class="w-full py-3 bg-brandOrange hover:bg-orange-600 text-white font-semibold rounded-lg shadow">Entrar</button>
+    <div id="login-error" class="text-xs text-red-500 text-center hidden"></div>
+   </form>
+  </div>
+ </div>
+</div>
+
+<!-- PANEL -->
+<div id="dashboard-view" class="hidden min-h-screen flex flex-col">
+ <header class="bg-slate-900 text-white px-4 md:px-6 py-3 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
+  <div class="flex items-center space-x-2"><span class="text-brandOrange font-black tracking-wider text-xl">FLOTAS</span><span class="text-slate-400 text-xs font-semibold">| Validaciones</span></div>
+  <nav id="nav" class="flex items-center gap-2 text-xs font-bold overflow-x-auto order-3 md:order-none w-full md:w-auto"></nav>
+  <div class="flex items-center space-x-3">
+   <div id="user-initial" class="w-7 h-7 rounded-full bg-brandOrange flex items-center justify-center font-bold text-xs">U</div>
+   <div class="text-right"><div id="user-display" class="text-xs font-bold">USUARIO</div><div id="user-role-display" class="text-[10px] text-slate-400">Rol</div></div>
+   <button onclick="logout()" class="text-slate-400 hover:text-white" title="Cerrar sesión"><i class="fa-solid fa-right-from-bracket"></i></button>
+  </div>
+ </header>
+
+ <main class="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto space-y-6">
+
+  <!-- COORDINADOR: Servicios -->
+  <div id="tab-servicios" class="pane hidden space-y-4">
+   <div class="flex flex-wrap items-center gap-2">
+    <h2 class="text-xl font-bold mr-2">Servicios AT&T</h2>
+    <div id="chips" class="flex gap-2"></div>
+    <input id="buscar" oninput="pintar()" class="inp max-w-xs" placeholder="Buscar folio, técnico, cliente…">
+    <label class="ml-auto px-4 py-2 bg-white border rounded-lg text-xs font-bold cursor-pointer shadow-sm"><i class="fa-solid fa-file-excel mr-1 text-emerald-600"></i>Importar Excel<input id="xl" type="file" accept=".xlsx,.xls" class="hidden"></label>
+   </div>
+   <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
+    <table class="w-full text-left text-xs min-w-[720px]">
+     <thead><tr class="bg-slate-800 text-white"><th class="p-3">Folio acuerdo</th><th class="p-3">Visita</th><th class="p-3">Motivo</th><th class="p-3">Cliente</th><th class="p-3">Ciudad</th><th class="p-3">Técnico</th><th class="p-3">Estatus</th><th class="p-3 text-center">Acciones</th></tr></thead>
+     <tbody id="tabla" class="divide-y divide-slate-100"></tbody>
+    </table>
+   </div>
+  </div>
+
+  <!-- COORDINADOR: Nuevo servicio -->
+  <div id="tab-nuevo" class="pane hidden">
+   <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border">
+    <h3 class="text-base font-bold mb-4">Crear nuevo servicio</h3>
+    <form id="form-nuevo" onsubmit="crearServicio(event)" class="space-y-5">
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div><label class="lbl">Folio acuerdo *</label><input name="folioAcuerdo" required class="inp" placeholder="Ej. 3873031757-3"></div>
+      <div><label class="lbl">Técnico asignado *</label><select name="tecnicoAsignado" id="sel-tec" required class="inp"></select></div>
+      <div><label class="lbl">Fecha de visita *</label><input type="date" name="fecha" required class="inp"></div>
+      <div><label class="lbl">Hora de visita *</label><input type="time" name="hora" required class="inp"></div>
+      <div><label class="lbl">Motivo de la visita *</label><select name="motivo" id="sel-mot" required class="inp"></select></div>
+      <div><label class="lbl">Cámara</label><select name="camara" class="inp"><option>No</option><option>Sí</option></select></div>
+      <div class="md:col-span-2"><label class="lbl">Otros accesorios</label><input name="accesorios" class="inp"></div>
+      <div><label class="lbl">Nombre del cliente *</label><input name="cliente" required class="inp"></div>
+      <div><label class="lbl">Razón social *</label><input name="razonSocial" required class="inp"></div>
+      <div class="md:col-span-2"><label class="lbl">Lugar de atención *</label><input name="lugarAtencion" required class="inp"></div>
+      <div><label class="lbl">Nombre de quien recibe al técnico *</label><input name="recibe" required class="inp"></div>
+      <div><label class="lbl">Números de contacto *</label><input name="contacto" required class="inp"></div>
+      <div><label class="lbl">Ciudad *</label><input name="ciudad" required class="inp"></div>
+      <div><label class="lbl">Estado *</label><input name="estado" required class="inp" placeholder="Ej. CDMX"></div>
+     </div>
+     <button class="px-6 py-2.5 bg-brandOrange hover:bg-orange-600 text-white font-semibold rounded-lg shadow">Guardar y asignar al técnico</button>
+    </form>
+   </div>
+  </div>
+
+  <!-- COORDINADOR: Instaladores -->
+  <div id="tab-instaladores" class="pane hidden space-y-4">
+   <div class="bg-white p-6 rounded-xl shadow-sm border">
+    <h3 class="text-sm font-bold mb-1"><i class="fa-solid fa-user-plus mr-2"></i>Dar de alta técnico o instalador</h3>
+    <p class="text-xs text-slate-500 mb-4">El nombre debe ser igual al de la lista del Excel (ej. CESAR SANCHEZ - CENTRO): con él se cruzan los servicios asignados.</p>
+    <form onsubmit="altaInstalador(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
+     <input id="n-nombre" required list="lista-tec" placeholder="Nombre del técnico" class="inp"><datalist id="lista-tec"></datalist>
+     <input id="n-usuario" required autocapitalize="none" placeholder="Usuario" class="inp">
+     <input id="n-pass" required minlength="6" placeholder="Contraseña (mín. 6)" class="inp">
+     <button class="py-2.5 bg-brandOrange text-white text-xs font-bold rounded-lg shadow">Dar de alta</button>
+    </form>
+   </div>
+   <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
+    <table class="w-full text-left text-xs min-w-[520px]"><thead><tr class="bg-slate-800 text-white"><th class="p-3">Instalador</th><th class="p-3">Usuario</th><th class="p-3">Nueva contraseña</th><th class="p-3"></th></tr></thead><tbody id="tabla-inst" class="divide-y divide-slate-100"></tbody></table>
+   </div>
+  </div>
+
+  <!-- COORDINADOR: KPI -->
+  <div id="tab-kpi" class="pane hidden space-y-6">
+   <h2 class="text-xl font-bold">Métricas de operación</h2>
+   <div id="kpi-cards" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+   <div class="bg-white rounded-xl border shadow-sm p-5 overflow-x-auto"><h3 class="font-bold mb-3">Por técnico</h3><table class="w-full text-xs text-left min-w-[420px]"><thead class="text-slate-400 uppercase"><tr><th class="py-2">Técnico</th><th>Servicios</th><th>Completados</th><th>Pendientes</th></tr></thead><tbody id="kpi-tec" class="divide-y"></tbody></table></div>
+   <div class="bg-white rounded-xl border shadow-sm p-5 overflow-x-auto"><h3 class="font-bold mb-3">Por motivo de la visita</h3><table class="w-full text-xs text-left min-w-[420px]"><thead class="text-slate-400 uppercase"><tr><th class="py-2">Motivo</th><th>Servicios</th><th>Completados</th><th>Pendientes</th></tr></thead><tbody id="kpi-mot" class="divide-y"></tbody></table></div>
+  </div>
+
+  <!-- TÉCNICO: Mis servicios -->
+  <div id="tab-mis" class="pane hidden space-y-3">
+   <h2 class="text-xl font-bold">Mis servicios</h2>
+   <div id="lista-tec-servicios" class="space-y-3"></div>
+  </div>
+
+  <!-- TÉCNICO: Captura -->
+  <div id="tab-captura" class="pane hidden">
+   <div class="bg-white p-6 md:p-8 rounded-xl shadow-sm border">
+    <h3 class="text-base font-bold mb-1">Completar ODS y evidencias</h3>
+    <div id="resumen" class="text-xs text-slate-500 mb-5">Elige un servicio en «Mis servicios» para capturarlo.</div>
+    <form id="form-ods" onsubmit="enviarODS(event)" class="space-y-6">
+     <input type="hidden" id="input-folio" name="folioAcuerdo">
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl border">
+      <div><label class="lbl">Serie GO9 *</label><input name="serialGo9" required autocapitalize="characters" class="inp" placeholder="Ej. G95NKM878RSN"></div>
+      <div><label class="lbl">IMEI cámara</label><input name="imeiCamara" inputmode="numeric" class="inp"></div>
+      <div><label class="lbl">Número de SIM</label><input name="numeroSim" class="inp"></div>
+      <div><label class="lbl">Arnés</label><input name="arnes" class="inp" placeholder="Ej. 16K22"></div>
+     </div>
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div><label class="lbl">Marca</label><input name="marcaVehiculo" class="inp"></div>
+      <div><label class="lbl">Modelo</label><input name="modeloVehiculo" class="inp"></div>
+      <div><label class="lbl">VIN (17 caracteres)</label><input name="vinVehiculo" maxlength="17" autocapitalize="characters" class="inp"></div>
+      <div><label class="lbl">Placas</label><input name="placasVehiculo" autocapitalize="characters" class="inp"></div>
+     </div>
+     <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100 space-y-3">
+      <h4 class="text-xs font-bold text-blue-900 uppercase">Evidencias fotográficas</h4>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+       <div><label class="lbl">Foto del adherible del GO9</label><input type="file" name="foto_adherible" accept="image/*" class="w-full text-xs"></div>
+       <div><label class="lbl">Foto IMEI y SIM de cámara</label><input type="file" name="foto_imei_camara" accept="image/*" class="w-full text-xs"></div>
+       <div><label class="lbl">Foto del VIN</label><input type="file" name="foto_vin" accept="image/*" class="w-full text-xs"></div>
+       <div><label class="lbl">Fotos de la instalación (varias)</label><input type="file" name="foto_tablero" accept="image/*" multiple class="w-full text-xs"></div>
+      </div>
+     </div>
+     <div><label class="lbl">Comentario del técnico / observaciones</label><textarea name="comentarioTecnico" rows="3" class="inp" placeholder="Ej. Instalación concluida sin novedad."></textarea></div>
+     <div class="space-y-3">
+      <h4 class="text-xs font-bold text-slate-700 uppercase">Firmas</h4>
+      <input id="firma-nombre" class="inp" placeholder="Nombre de quien recibe (cliente)">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+       <div><div class="lbl">Firma del cliente</div><canvas id="firma-cliente" width="500" height="160" class="w-full bg-white border-2 border-dashed border-slate-300 rounded-lg"></canvas><button type="button" onclick="limpiar('firma-cliente')" class="text-xs text-slate-500 underline">Borrar</button></div>
+       <div><div class="lbl">Firma del técnico</div><canvas id="firma-tecnico" width="500" height="160" class="w-full bg-white border-2 border-dashed border-slate-300 rounded-lg"></canvas><button type="button" onclick="limpiar('firma-tecnico')" class="text-xs text-slate-500 underline">Borrar</button></div>
+      </div>
+     </div>
+     <button id="btn-ods" class="w-full py-3.5 bg-brandOrange hover:bg-orange-600 text-white font-bold rounded-xl shadow">Generar y descargar ODS en PDF</button>
+    </form>
+    <div id="resultado" class="mt-6 hidden p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+     <p class="text-emerald-700 font-semibold mb-2"><i class="fa-solid fa-circle-check mr-2"></i>¡Orden generada y registrada!</p>
+     <a id="link-pdf" href="#" download class="inline-flex items-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow"><i class="fa-solid fa-download mr-2"></i>Descargar PDF</a>
     </div>
+   </div>
+  </div>
+ </main>
+</div>
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-6 z-50 hidden px-4 py-2 rounded-lg text-sm text-white shadow-lg max-w-[90vw]"></div>
 
-    <!-- PANEL PRINCIPAL -->
-    <div id="dashboard-view" class="hidden min-h-screen flex flex-col">
-        <header class="bg-slate-900 text-white px-6 py-3 flex items-center justify-between border-b border-slate-800">
-            <div class="flex items-center space-x-6">
-                <div class="flex items-center space-x-2">
-                    <span class="text-brandOrange font-black tracking-wider text-xl">FLOTAS</span>
-                    <span class="text-slate-400 text-xs font-semibold">| Validaciones</span>
-                </div>
-            </div>
+<script>
+const $=id=>document.getElementById(id);
+const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MOT=['Instalación','Desinstalación','Reinstalación','Revisión','Reemplazo','Intercambio','Remover','Visita en falso'];
+const TABS={coord:[['tab-servicios','Servicios'],['tab-nuevo','Nuevo servicio'],['tab-instaladores','Instaladores'],['tab-kpi','KPI']],tec:[['tab-mis','Mis servicios'],['tab-captura','Capturar ODS']]};
+let me=null,servicios=[],filtro='Todos';
 
-            <!-- Menú Coordinador -->
-            <nav id="nav-coordinador" class="hidden md:flex items-center space-x-2 text-xs font-bold">
-                <button onclick="switchTab('tab-coord-servicios')" class="nav-btn px-4 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800">Servicios</button>
-                <button onclick="switchTab('tab-coord-nuevo')" class="nav-btn px-4 py-2 rounded-full bg-brandOrange text-white shadow">Nuevo servicio</button>
-                <button onclick="switchTab('tab-coord-instaladores')" class="nav-btn px-4 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800">Instaladores</button>
-                <button onclick="switchTab('tab-coord-kpi')" class="nav-btn px-4 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800">KPI</button>
-            </nav>
+function toast(m,mal){const t=$('toast');t.textContent=m;t.className='fixed left-1/2 -translate-x-1/2 bottom-6 z-50 px-4 py-2 rounded-lg text-sm text-white shadow-lg max-w-[90vw] '+(mal?'bg-red-600':'bg-slate-800');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.add('hidden'),3500)}
+async function api(u,o={}){
+ o.headers={...(o.headers||{}),Authorization:'Bearer '+(localStorage.getItem('tk')||'')};
+ const r=await fetch(u,o);
+ if(r.status===401&&localStorage.getItem('tk')){localStorage.removeItem('tk');location.reload();throw new Error('Sesión expirada')}
+ return r.json();
+}
+const enviar=(u,b,m='POST')=>api(u,{method:m,headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
 
-            <!-- Menú Técnico (Restringido exclusivamente a su flujo) -->
-            <nav id="nav-tecnico" class="hidden md:flex items-center space-x-2 text-xs font-bold">
-                <button onclick="switchTab('tab-tec-mis-servicios')" class="nav-btn px-4 py-2 rounded-full bg-brandOrange text-white shadow">Mis servicios</button>
-                <button onclick="switchTab('tab-tec-captura')" class="nav-btn px-4 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800">Capturar ODS y Fotos</button>
-            </nav>
+// ---------- Sesión ----------
+async function handleLogin(e){
+ e.preventDefault();const er=$('login-error');er.classList.add('hidden');
+ try{
+  const d=await (await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({usuario:$('usuario').value,password:$('password').value})})).json();
+  if(!d.exito||!d.token){er.textContent=d.error||'El servidor es la versión anterior: sube el server.js nuevo y reinícialo.';er.classList.remove('hidden');return}
+  localStorage.setItem('tk',d.token);entrar(d.usuario);
+ }catch(x){er.textContent='No hay conexión con el servidor';er.classList.remove('hidden')}
+}
+function logout(){localStorage.removeItem('tk');location.reload()}
+function entrar(u){
+ me=u;const c=u.rol==='coord';
+ $('login-view').classList.add('hidden');$('dashboard-view').classList.remove('hidden');
+ $('user-display').textContent=u.nombre;$('user-initial').textContent=u.nombre.charAt(0).toUpperCase();
+ $('user-role-display').textContent=c?'Coordinador AT&T':'Instalador / Técnico de campo';
+ $('nav').innerHTML=TABS[c?'coord':'tec'].map(([id,l])=>`<button data-tab="${id}" onclick="tab('${id}')" class="nav-btn whitespace-nowrap px-4 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800">${l}</button>`).join('');
+ if(c)cargarTecnicos();
+ tab(c?'tab-servicios':'tab-mis');
+}
+function tab(id){
+ document.querySelectorAll('.pane').forEach(p=>p.classList.add('hidden'));$(id).classList.remove('hidden');
+ document.querySelectorAll('.nav-btn').forEach(b=>{const on=b.dataset.tab===id;b.classList.toggle('bg-brandOrange',on);b.classList.toggle('text-white',on);b.classList.toggle('text-slate-300',!on)});
+ if(['tab-servicios','tab-kpi','tab-mis'].includes(id))cargarServicios();
+ if(id==='tab-instaladores')cargarInstaladores();
+ window.scrollTo(0,0);
+}
 
-            <div class="flex items-center space-x-3">
-                <div class="w-7 h-7 rounded-full bg-brandOrange text-white flex items-center justify-center font-bold text-xs" id="user-initial">U</div>
-                <div class="text-right">
-                    <div id="user-display" class="text-xs font-bold text-white">USUARIO</div>
-                    <div id="user-role-display" class="text-[10px] text-slate-400">Rol</div>
-                </div>
-                <button onclick="logout()" class="ml-3 text-slate-400 hover:text-white" title="Cerrar sesión">
-                    <i class="fa-solid fa-right-from-bracket text-sm"></i>
-                </button>
-            </div>
-        </header>
+// ---------- Servicios ----------
+async function cargarServicios(){
+ try{const d=await api('/api/servicios');servicios=d.servicios||[]}catch(x){return}
+ pintar();pintarKPI();pintarTec();
+}
+function pintar(){
+ if(!me||me.rol!=='coord')return;
+ $('chips').innerHTML=['Todos','Enviado','Completado'].map(f=>`<button onclick="filtro='${f}';pintar()" class="px-3 py-1 rounded-full text-xs font-bold border ${f===filtro?'bg-slate-800 text-white border-slate-800':'bg-white'}">${f==='Enviado'?'Enviados':f==='Completado'?'Completados':f}</button>`).join('');
+ const q=($('buscar').value||'').toLowerCase();
+ const l=servicios.filter(s=>(filtro==='Todos'||s.estatus===filtro)&&(!q||JSON.stringify([s.folio,s.tecnico,s.cliente,s.razon,s.ciudad]).toLowerCase().includes(q)));
+ $('tabla').innerHTML=l.length?l.map(s=>`<tr class="hover:bg-slate-50"><td class="p-3 font-bold">${E(s.folio)}</td><td class="p-3">${E(s.fecha)} ${E(s.hora)}</td><td class="p-3">${E(s.motivo)}</td>
+  <td class="p-3"><b>${E(s.cliente)}</b><div class="text-slate-400">${E(s.razon)}</div></td><td class="p-3">${E(s.ciudad)}${s.edo?', '+E(s.edo):''}</td><td class="p-3">${E(s.tecnico)}</td>
+  <td class="p-3"><span class="px-2.5 py-0.5 rounded-full font-bold ${s.estatus==='Completado'?'bg-emerald-100 text-emerald-800':'bg-blue-100 text-blue-800'}">${E(s.estatus)}</span></td>
+  <td class="p-3 text-center whitespace-nowrap">${s.urlDoc?`<a href="${E(s.urlDoc)}" download class="text-blue-600 mr-3" title="Descargar PDF"><i class="fa-solid fa-download"></i></a>`:''}<button data-f="${E(s.folio)}" onclick="borrarServicio(this.dataset.f)" class="text-red-500" title="Eliminar"><i class="fa-solid fa-trash"></i></button></td></tr>`).join('')
+  :'<tr><td colspan="8" class="p-4 text-center text-slate-500">No hay servicios. Importa tu Excel o crea uno nuevo.</td></tr>';
+}
+async function borrarServicio(f){if(!confirm('¿Eliminar el servicio '+f+'?'))return;await api('/api/servicios/'+encodeURIComponent(f),{method:'DELETE'});cargarServicios()}
+async function crearServicio(e){
+ e.preventDefault();const f=$('form-nuevo'),o=Object.fromEntries(new FormData(f).entries());o.fecha=o.fecha.split('-').reverse().join('/');
+ const d=await enviar('/api/servicios',o);if(!d.exito)return toast(d.error,1);
+ toast('Servicio creado y asignado');f.reset();tab('tab-servicios');
+}
+$('xl').onchange=async e=>{
+ const fd=new FormData();fd.append('archivo',e.target.files[0]);e.target.value='';
+ const d=await api('/api/servicios/importar',{method:'POST',body:fd});
+ if(!d.exito)return toast(d.error,1);
+ toast(`${d.cargados} servicios cargados · ${d.repetidos} repetidos · filas incompletas: ${d.filasIncompletas.join(', ')||'ninguna'}`);cargarServicios();
+};
+function pintarKPI(){
+ if(!me||me.rol!=='coord')return;
+ const T=servicios.length,C=servicios.filter(s=>s.estatus==='Completado').length,P=T-C,card=(l,v,c='text-slate-800')=>`<div class="bg-white p-5 rounded-xl border shadow-sm"><div class="text-slate-400 text-xs font-bold uppercase">${l}</div><div class="text-3xl font-black ${c} mt-1">${v}</div></div>`;
+ $('kpi-cards').innerHTML=card('Servicios',T)+card('Completados',C,'text-emerald-600')+card('Pendientes',P,'text-blue-600')+card('Efectividad',T?Math.round(C*100/T)+'%':'—','text-orange-500');
+ const grupo=k=>{const m={};servicios.forEach(s=>{const x=m[s[k]||'—']=m[s[k]||'—']||[0,0];x[0]++;if(s.estatus==='Completado')x[1]++});return Object.entries(m).sort((a,b)=>b[1][0]-a[1][0]).map(([n,[t,c]])=>`<tr><td class="py-2 font-semibold">${E(n)}</td><td>${t}</td><td>${c}</td><td>${t-c}</td></tr>`).join('')||'<tr><td class="py-3 text-slate-400">Sin datos</td></tr>'};
+ $('kpi-tec').innerHTML=grupo('tecnico');$('kpi-mot').innerHTML=grupo('motivo');
+}
 
-        <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+// ---------- Instaladores ----------
+async function cargarTecnicos(){
+ const d=await api('/api/instaladores');if(!d.exito)return;
+ $('sel-tec').innerHTML=d.instaladores.map(i=>`<option>${E(i.nombre)}</option>`).join('');
+ $('sel-mot').innerHTML=MOT.map(m=>`<option>${m}</option>`).join('');
+ $('lista-tec').innerHTML=['ALEXANDER - COL','ANGEL ZACARIAS - NORTE','ANTONIO PEREZ - SUR','ARMANDO GUTIERREZ - SUR','CARLOS LEAL - NORTE','CESAR SANCHEZ - CENTRO','DAVID RIVERA - CENTRO','FROYLAND CRUZ - NORTE','HECTOR FLORES - NORTE','JOSE PABLO GONZALEZ - CENTRO','MIGUEL GARCIA - NORTE','RODRIGO SANCHEZ - CENTRO','ROMAN HERVERT - CENTRO','VICTOR MENDOZA - CENTRO','YAEL FLORES - CENTRO'].map(n=>`<option value="${n}">`).join('');
+ return d.instaladores;
+}
+async function cargarInstaladores(){
+ const l=await cargarTecnicos()||[];
+ $('tabla-inst').innerHTML=l.length?l.map(i=>`<tr><td class="p-3 font-bold">${E(i.nombre)}</td><td class="p-3">${E(i.usuario)}</td>
+  <td class="p-3"><div class="flex gap-2"><input id="pw-${E(i.usuario)}" placeholder="Nueva contraseña" class="inp !py-1"><button data-u="${E(i.usuario)}" onclick="cambiarPass(this.dataset.u)" class="px-3 text-xs font-bold bg-slate-800 text-white rounded-lg">Cambiar</button></div></td>
+  <td class="p-3"><button data-u="${E(i.usuario)}" onclick="borrarInst(this.dataset.u)" class="text-red-500 text-xs font-bold">Eliminar</button></td></tr>`).join('')
+  :'<tr><td colspan="4" class="p-4 text-center text-slate-500">Aún no hay técnicos dados de alta.</td></tr>';
+}
+async function altaInstalador(e){
+ e.preventDefault();
+ const d=await enviar('/api/instaladores',{nombre:$('n-nombre').value,usuario:$('n-usuario').value,password:$('n-pass').value});
+ if(!d.exito)return toast(d.error,1);
+ toast('Técnico dado de alta');['n-nombre','n-usuario','n-pass'].forEach(i=>$(i).value='');cargarInstaladores();
+}
+async function cambiarPass(u){const p=$('pw-'+u).value,d=await enviar('/api/instaladores/'+encodeURIComponent(u),{password:p},'PUT');toast(d.exito?'Contraseña cambiada':d.error,!d.exito)}
+async function borrarInst(u){if(confirm('¿Eliminar al usuario '+u+'?')){await api('/api/instaladores/'+encodeURIComponent(u),{method:'DELETE'});cargarInstaladores()}}
 
-            <!-- ================= VISTAS DE COORDINADOR ================= -->
+// ---------- Técnico ----------
+function pintarTec(){
+ if(!me||me.rol!=='tec')return;
+ $('lista-tec-servicios').innerHTML=servicios.length?servicios.map(s=>`<div class="bg-white p-4 rounded-xl border shadow-sm flex flex-wrap gap-3 justify-between items-center">
+  <div><span class="font-bold text-sm">${E(s.folio)} · ${E(s.motivo)}</span><div class="text-xs text-slate-500">${E(s.cliente)} — ${E(s.lugar)}</div><div class="text-xs text-slate-400">Visita ${E(s.fecha)} ${E(s.hora)} · ${E(s.estatus)}</div></div>
+  ${s.urlDoc?`<a href="${E(s.urlDoc)}" download class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg">Descargar PDF</a>`
+   :`<button data-f="${E(s.folio)}" onclick="elegir(this.dataset.f)" class="px-4 py-2 bg-brandOrange text-white text-xs font-bold rounded-lg shadow">Llenar ODS y fotos</button>`}</div>`).join('')
+  :'<div class="p-4 bg-white rounded-xl border text-slate-500 text-xs">No tienes servicios asignados.</div>';
+}
+function elegir(f){
+ const s=servicios.find(x=>x.folio===f);$('input-folio').value=f;
+ $('resumen').innerHTML=`<b class="text-slate-700">${E(f)}</b> · ${E(s.motivo)} · ${E(s.cliente)}<br>${E(s.lugar)}, ${E(s.ciudad)}<br>Recibe: ${E(s.recibe)}`;
+ $('firma-nombre').value=s.recibe||'';$('resultado').classList.add('hidden');tab('tab-captura');
+}
 
-            <!-- 1. Coordinador: Servicios -->
-            <div id="tab-coord-servicios" class="tab-pane hidden space-y-4">
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="bg-slate-800 text-white">
-                                <th class="p-3">Folio Acuerdo</th>
-                                <th class="p-3">Cliente</th>
-                                <th class="p-3">Ciudad</th>
-                                <th class="p-3">Técnico Asignado</th>
-                                <th class="p-3">Estatus</th>
-                                <th class="p-3 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-coord-servicios" class="divide-y divide-slate-100">
-                            <!-- Dinámico -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+// Firmas
+function pad(c){
+ const x=c.getContext('2d');x.lineWidth=2.4;x.lineCap='round';let d=false;
+ const p=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)*c.width/r.width,(e.clientY-r.top)*c.height/r.height]};
+ c.onpointerdown=e=>{d=true;c.setPointerCapture(e.pointerId);x.beginPath();x.moveTo(...p(e))};
+ c.onpointermove=e=>{if(d){x.lineTo(...p(e));x.stroke();c.dataset.f=1}};
+ c.onpointerup=()=>d=false;
+}
+function limpiar(id){const c=$(id);c.getContext('2d').clearRect(0,0,c.width,c.height);delete c.dataset.f}
+['firma-cliente','firma-tecnico'].forEach(i=>pad($(i)));
 
-            <!-- 2. Coordinador: Nuevo Servicio -->
-            <div id="tab-coord-nuevo" class="tab-pane hidden space-y-6">
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="text-base font-bold text-slate-800 mb-4">Crear Nueva Orden de Servicio (Coordinación)</h3>
-                    <form id="form-nuevo-servicio" onsubmit="crearServicioCoordinador(event)" class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Folio Acuerdo *</label>
-                                <input type="text" name="folioAcuerdo" required class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. REV160725NOR">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Técnico Asignado</label>
-                                <select name="tecnicoAsignado" class="w-full px-4 py-2 border rounded-lg text-sm">
-                                    <option>ARMANDO GUTIERREZ - SUR</option>
-                                    <option>CESAR SANCHEZ - CENTRO</option>
-                                    <option>ALEXANDER - COL</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Nombre del Cliente</label>
-                                <input type="text" name="cliente" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. ALAN PIÑA">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Razón Social</label>
-                                <input type="text" name="razonSocial" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. EXCLUSIVAS FARO">
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Lugar de Atención</label>
-                                <input type="text" name="lugarAtencion" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Dirección completa">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Ciudad</label>
-                                <input type="text" name="ciudad" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. GUSTAVO A MADERO">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Estado</label>
-                                <input type="text" name="estado" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. CDMX">
-                            </div>
-                        </div>
-                        <button type="submit" class="px-6 py-2.5 bg-brandOrange hover:bg-orange-600 text-white font-semibold rounded-lg shadow">
-                            Guardar y Asignar al Técnico
-                        </button>
-                    </form>
-                </div>
-            </div>
+// Fotos: se reducen a JPEG para subir rápido y que el PDF compatible
+const comprimir=f=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>{const k=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(i.src);c.toBlob(b=>ok(b),'image/jpeg',.8)};i.onerror=()=>no(new Error('No se pudo leer la foto '+f.name));i.src=URL.createObjectURL(f)});
 
-            <!-- 3. Coordinador: Gestión de Instaladores -->
-            <div id="tab-coord-instaladores" class="tab-pane hidden space-y-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="text-sm font-bold text-slate-800 mb-4"><i class="fa-solid fa-user-plus mr-2"></i> Dar de Alta Nuevo Técnico o Instalador</h3>
-                    <form onsubmit="registrarInstalador(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                        <input type="text" id="nuevo-nombre" placeholder="Nombre completo del técnico" required class="px-4 py-2 border rounded-lg text-sm">
-                        <input type="text" id="nuevo-usuario" placeholder="Usuario para app" required class="px-4 py-2 border rounded-lg text-sm">
-                        <input type="password" id="nuevo-password" placeholder="Contraseña" required class="px-4 py-2 border rounded-lg text-sm">
-                        <button type="submit" class="md:col-span-3 py-2.5 bg-brandOrange text-white text-xs font-bold rounded-lg shadow">
-                            Registrar Instalador en el Sistema
-                        </button>
-                    </form>
-                </div>
-            </div>
+async function enviarODS(e){
+ e.preventDefault();const f=$('form-ods'),b=$('btn-ods'),c1=$('firma-cliente'),c2=$('firma-tecnico');
+ if(!$('input-folio').value)return toast('Primero elige un servicio en «Mis servicios»',1);
+ if(!c1.dataset.f||!c2.dataset.f)return toast('Faltan las firmas del cliente y del técnico',1);
+ b.disabled=true;b.textContent='Generando PDF…';
+ try{
+  const fd=new FormData();
+  new FormData(f).forEach((v,k)=>{if(!(v instanceof File))fd.append(k,v)});
+  for(const inp of f.querySelectorAll('input[type=file]'))for(const [i,file] of [...inp.files].entries())fd.append(inp.name,await comprimir(file),`${inp.name}_${i}.jpg`);
+  fd.append('firmaCliente',c1.toDataURL('image/png'));fd.append('firmaTecnico',c2.toDataURL('image/png'));fd.append('nombreCliente',$('firma-nombre').value);
+  const d=await api('/api/generar-ods',{method:'POST',body:fd});
+  if(!d.exito)throw new Error(d.error||'No se pudo generar el PDF');
+  const l=$('link-pdf');l.href=d.descargaUrl;l.setAttribute('download','ODS_'+$('input-folio').value+'.pdf');$('resultado').classList.remove('hidden');l.click();
+  f.reset();limpiar('firma-cliente');limpiar('firma-tecnico');$('input-folio').value='';$('resumen').textContent='Servicio completado. Elige otro en «Mis servicios».';
+ }catch(x){toast('Error: '+x.message,1)}
+ finally{b.disabled=false;b.textContent='Generar y descargar ODS en PDF'}
+}
 
-            <!-- 4. Coordinador: KPI Limpio y Profesional -->
-            <div id="tab-coord-kpi" class="tab-pane hidden space-y-6">
-                <h2 class="text-base font-bold text-slate-800">Métricas de Operación y Servicios</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-white p-5 rounded-xl border shadow-sm">
-                        <div class="text-slate-400 text-xs font-bold uppercase">Total Servicios</div>
-                        <div class="text-3xl font-black text-slate-800 mt-1">7</div>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl border shadow-sm">
-                        <div class="text-slate-400 text-xs font-bold uppercase">Completados</div>
-                        <div class="text-3xl font-black text-emerald-600 mt-1">3</div>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl border shadow-sm">
-                        <div class="text-slate-400 text-xs font-bold uppercase">En Curso</div>
-                        <div class="text-3xl font-black text-blue-600 mt-1">4</div>
-                    </div>
-                    <div class="bg-white p-5 rounded-xl border shadow-sm">
-                        <div class="text-slate-400 text-xs font-bold uppercase">Efectividad</div>
-                        <div class="text-3xl font-black text-orange-500 mt-1">100%</div>
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- ================= VISTAS DE TÉCNICO ================= -->
-
-            <!-- 1. Técnico: Mis Servicios -->
-            <div id="tab-tec-mis-servicios" class="tab-pane hidden space-y-4">
-                <h2 class="text-sm font-bold text-slate-700">Servicios Asignados en Campo</h2>
-                <div id="lista-servicios-tecnico" class="space-y-3">
-                    <!-- Dinámico -->
-                </div>
-            </div>
-
-            <!-- 2. Técnico: Captura ODS y Fotos -->
-            <div id="tab-tec-captura" class="tab-pane hidden space-y-6">
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
-                    <h3 class="text-base font-bold text-slate-800 mb-2">Completar ODS y Captura de Evidencias</h3>
-                    <p class="text-xs text-slate-500 mb-6">Completa las series, datos de unidad y fotos obligatorias.</p>
-
-                    <form id="form-ods-completo" onsubmit="enviarODSCompleto(event)" class="space-y-6">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Folio de Acuerdo a Completar *</label>
-                            <input type="text" id="input-folio" name="folioAcuerdo" required class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. REV160725NOR">
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl border">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Serie GO9 *</label>
-                                <input type="text" name="serialGo9" required class="w-full px-4 py-2 bg-white border rounded-lg text-sm" placeholder="Ej. G9UKC44VDJSP">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">IMEI Cámara</label>
-                                <input type="text" name="imeiCamara" class="w-full px-4 py-2 bg-white border rounded-lg text-sm" placeholder="Ej. 015718009449612">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Número de SIM</label>
-                                <input type="text" name="numeroSim" class="w-full px-4 py-2 bg-white border rounded-lg text-sm" placeholder="ICCID SIM">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Arnés</label>
-                                <input type="text" name="arnes" class="w-full px-4 py-2 bg-white border rounded-lg text-sm" placeholder="Ej. 16K2">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Marca</label>
-                                <input type="text" name="marcaVehiculo" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. Nissan">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Modelo</label>
-                                <input type="text" name="modeloVehiculo" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. Frontier">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">VIN (17 dígitos)</label>
-                                <input type="text" name="vinVehiculo" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="3N6AD35C9JK841917">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Placas</label>
-                                <input type="text" name="placasVehiculo" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="LRZ523A">
-                            </div>
-                        </div>
-
-                        <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100 space-y-3">
-                            <h4 class="text-xs font-bold text-blue-900 uppercase">Evidencias Fotográficas Obligatorias</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                <div>
-                                    <label class="block font-semibold mb-1">Foto Adherible Dispositivo GO9:</label>
-                                    <input type="file" name="foto_adherible" accept="image/*" class="w-full text-xs">
-                                </div>
-                                <div>
-                                    <label class="block font-semibold mb-1">Foto IMEI y SIM Cámara:</label>
-                                    <input type="file" name="foto_imei_camara" accept="image/*" class="w-full text-xs">
-                                </div>
-                                <div>
-                                    <label class="block font-semibold mb-1">Foto VIN del Vehículo:</label>
-                                    <input type="file" name="foto_vin" accept="image/*" class="w-full text-xs">
-                                </div>
-                                <div>
-                                    <label class="block font-semibold mb-1">Fotos adicionales / Instalación:</label>
-                                    <input type="file" name="foto_tablero" accept="image/*" class="w-full text-xs">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Observaciones / Comentario técnico</label>
-                            <textarea name="comentarioTecnico" rows="3" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Ej. Instalación concluida sin novedad."></textarea>
-                        </div>
-
-                        <button type="submit" id="btn-generar-ods" class="w-full py-3.5 bg-brandOrange hover:bg-orange-600 text-white font-bold rounded-xl shadow">
-                            Generar y Descargar ODS Institucional
-                        </button>
-                    </form>
-
-                    <div id="resultado-ods" class="mt-6 hidden p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
-                        <p class="text-emerald-700 font-semibold mb-2"><i class="fa-solid fa-circle-check mr-2"></i> ¡Orden institucional generada y registrada con éxito!</p>
-                        <a id="link-descarga" href="#" target="_blank" download class="inline-flex items-center px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow">
-                            <i class="fa-solid fa-download mr-2"></i> Descargar Documento ODS
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-        </main>
-    </div>
-
-    <script>
-        let currentRole = 'coordinador';
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
-            const target = document.getElementById(tabId);
-            if(target) target.classList.remove('hidden');
-            if(tabId === 'tab-coord-servicios') cargarServiciosCoordinador();
-            if(tabId === 'tab-tec-mis-servicios') cargarServiciosTecnico();
-        }
-
-        async function handleLogin(e) {
-            e.preventDefault();
-            const usuarioInput = document.getElementById('usuario').value.toLowerCase().trim();
-
-            if (usuarioInput.includes('tec') || usuarioInput.includes('armando') || usuarioInput.includes('instalador')) {
-                currentRole = 'tecnico';
-            } else {
-                currentRole = 'coordinador';
-            }
-
-            document.getElementById('user-display').textContent = usuarioInput.toUpperCase();
-            document.getElementById('user-initial').textContent = usuarioInput.charAt(0).toUpperCase();
-            document.getElementById('login-view').classList.add('hidden');
-            document.getElementById('dashboard-view').classList.remove('hidden');
-
-            if (currentRole === 'tecnico') {
-                document.getElementById('nav-coordinador').classList.add('hidden');
-                document.getElementById('nav-tecnico').classList.remove('hidden');
-                document.getElementById('user-role-display').textContent = 'Instalador / Técnico de Campo';
-                switchTab('tab-tec-mis-servicios');
-            } else {
-                document.getElementById('nav-tecnico').classList.add('hidden');
-                document.getElementById('nav-coordinador').classList.remove('hidden');
-                document.getElementById('user-role-display').textContent = 'Coordinador AT&T';
-                switchTab('tab-coord-servicios');
-            }
-        }
-
-        function logout() {
-            document.getElementById('dashboard-view').classList.add('hidden');
-            document.getElementById('login-view').classList.remove('hidden');
-            document.getElementById('usuario').value = '';
-            document.getElementById('password').value = '';
-        }
-
-        function seleccionarFolioTecnico(folio) {
-            document.getElementById('input-folio').value = folio;
-            switchTab('tab-tec-captura');
-        }
-
-        async function crearServicioCoordinador(e) {
-            e.preventDefault();
-            const form = document.getElementById('form-nuevo-servicio');
-            const formData = new FormData(form);
-            const dataObj = Object.fromEntries(formData.entries());
-
-            try {
-                const res = await fetch('/api/servicios', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(dataObj)
-                });
-                const data = await res.json();
-                if(data.success) {
-                    alert('¡Servicio creado y asignado con éxito!');
-                    form.reset();
-                    switchTab('tab-coord-servicios');
-                }
-            } catch(e) {
-                alert('Error al guardar servicio.');
-            }
-        }
-
-        async function cargarServiciosCoordinador() {
-            try {
-                const res = await fetch('/api/servicios');
-                const data = await res.json();
-                const tbody = document.getElementById('tabla-coord-servicios');
-                tbody.innerHTML = '';
-                if(data.success && data.servicios.length > 0) {
-                    data.servicios.forEach(s => {
-                        const urlDescarga = s.urlDoc || '#';
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-slate-50">
-                                <td class="p-3 font-bold text-slate-800">${s.folio}</td>
-                                <td class="p-3">${s.unidad || 'Cliente General'}</td>
-                                <td class="p-3">CDMX</td>
-                                <td class="p-3">${s.operador || 'Técnico Campo'}</td>
-                                <td class="p-3"><span class="px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full font-bold">Enviado</span></td>
-                                <td class="p-3 text-center">
-                                    <a href="${urlDescarga}" target="_blank" download class="text-blue-600 hover:text-blue-800 font-bold" title="Ver / Descargar ODS">
-                                        <i class="fa-solid fa-eye text-base"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">No hay servicios registrados.</td></tr>`;
-                }
-            } catch(err) {
-                console.error(err);
-            }
-        }
-
-        async function cargarServiciosTecnico() {
-            try {
-                const res = await fetch('/api/servicios');
-                const data = await res.json();
-                const contenedor = document.getElementById('lista-servicios-tecnico');
-                contenedor.innerHTML = '';
-                if(data.success && data.servicios.length > 0) {
-                    data.servicios.forEach(s => {
-                        contenedor.innerHTML += `
-                            <div class="bg-white p-4 rounded-xl border shadow-sm flex justify-between items-center">
-                                <div>
-                                    <span class="font-bold text-slate-900 text-sm">${s.folio} · Instalación</span>
-                                    <div class="text-xs text-slate-500">${s.unidad || 'Cliente General'} | Fecha: ${s.fecha}</div>
-                                </div>
-                                <button onclick="seleccionarFolioTecnico('${s.folio}')" class="px-4 py-2 bg-brandOrange text-white text-xs font-bold rounded-lg shadow">
-                                    Llenar ODS y Fotos
-                                </button>
-                            </div>
-                        `;
-                    });
-                } else {
-                    contenedor.innerHTML = `<div class="p-4 bg-white rounded-xl border text-slate-500 text-xs">No hay servicios pendientes asignados.</div>`;
-                }
-            } catch(err) {
-                console.error(err);
-            }
-        }
-
-        async function registrarInstalador(e) {
-            e.preventDefault();
-            const nombre = document.getElementById('nuevo-nombre').value;
-            const usuario = document.getElementById('nuevo-usuario').value;
-            const password = document.getElementById('nuevo-password').value;
-
-            const res = await fetch('/api/instaladores', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({nombre, usuario, password})
-            });
-            const data = await res.json();
-            if(data.exito) {
-                alert('¡Técnico/Instalador registrado con éxito!');
-                document.getElementById('nuevo-nombre').value = '';
-                document.getElementById('nuevo-usuario').value = '';
-                document.getElementById('nuevo-password').value = '';
-            }
-        }
-
-async function enviarODSCompleto(e) {
-            e.preventDefault();
-            const form = document.getElementById('form-ods-completo');
-            const formData = new FormData(form);
-            const btn = document.getElementById('btn-generar-ods');
-            const resultado = document.getElementById('resultado-ods');
-            const link = document.getElementById('link-descarga');
-
-            btn.disabled = true;
-            btn.textContent = "Generando ODS institucional...";
-
-            try {
-                const res = await fetch('/api/generar-ods', { method: 'POST', body: formData });
-                const data = await res.json();
-                
-                if(data.exito && data.descargaUrl) {
-                    resultado.classList.remove('hidden');
-                    link.href = data.descargaUrl;
-                    
-                    // Forzar la descarga directa mediante un elemento temporal en el DOM
-                    const downloadAnchor = document.createElement('a');
-                    downloadAnchor.href = data.descargaUrl;
-                    downloadAnchor.download = `ODS_${document.getElementById('input-folio').value || 'Institucional'}.docx`;
-                    document.body.appendChild(downloadAnchor);
-                    downloadAnchor.click();
-                    document.body.removeChild(downloadAnchor);
-
-                    form.reset();
-                } else {
-                    alert('Error: ' + (data.error || 'No se pudo generar el documento.'));
-                }
-            } catch(err) {
-                alert('Error de conexión al procesar la ODS.');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "Generar y Descargar ODS Institucional";
-            }
-        }
-    </script>
-// Parche para tu index.html actual. Agrégalo justo antes de </body>:  <script src="/parche.js"></script>
-(() => {
-  const $ = id => document.getElementById(id);
-  const E = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const J = b => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) });
-  const api = async (u, o = {}) => {
-    o.headers = { ...(o.headers || {}), Authorization: 'Bearer ' + (localStorage.getItem('tk') || '') };
-    const r = await fetch(u, o);
-    if (r.status === 401) { localStorage.removeItem('tk'); location.reload(); throw new Error('Sesión expirada'); }
-    return r.json();
-  };
- 
-  function entrar(u) {
-    currentRole = u.rol === 'coord' ? 'coordinador' : 'tecnico';
-    $('user-display').textContent = u.nombre.toUpperCase();
-    $('user-initial').textContent = u.nombre.charAt(0).toUpperCase();
-    $('login-view').classList.add('hidden'); $('dashboard-view').classList.remove('hidden');
-    const c = currentRole === 'coordinador';
-    $('nav-coordinador').classList.toggle('hidden', !c); $('nav-tecnico').classList.toggle('hidden', c);
-    $('user-role-display').textContent = c ? 'Coordinador AT&T' : 'Instalador / Técnico de Campo';
-    if (c) llenarTecnicos();
-    switchTab(c ? 'tab-coord-servicios' : 'tab-tec-mis-servicios');
-  }
-  async function llenarTecnicos() {
-    const d = await api('/api/instaladores'), s = document.querySelector('[name=tecnicoAsignado]');
-    if (s && d.exito) s.innerHTML = d.instaladores.map(i => `<option>${E(i.nombre)}</option>`).join('');
-  }
- 
-  window.handleLogin = async e => {
-    e.preventDefault(); const er = $('login-error'); er.classList.add('hidden');
-    try {
-      const d = await (await fetch('/api/login', J({ usuario: $('usuario').value, password: $('password').value }))).json();
-      if (!d.exito) { er.textContent = d.error || 'Credenciales incorrectas'; er.classList.remove('hidden'); return; }
-      localStorage.setItem('tk', d.token); entrar(d.usuario);
-    } catch (x) { er.textContent = 'No hay conexión con el servidor'; er.classList.remove('hidden'); }
-  };
-  window.logout = () => { localStorage.removeItem('tk'); location.reload(); };
- 
-  window.cargarServiciosCoordinador = async () => {
-    const d = await api('/api/servicios'), tb = $('tabla-coord-servicios');
-    tb.innerHTML = d.servicios.length ? d.servicios.map(s => `<tr class="hover:bg-slate-50">
-      <td class="p-3 font-bold text-slate-800">${E(s.folio)}</td><td class="p-3">${E(s.unidad)}</td><td class="p-3">${E(s.ciudad)}</td><td class="p-3">${E(s.operador)}</td>
-      <td class="p-3"><span class="px-2.5 py-0.5 rounded-full font-bold ${s.estatus === 'Completado' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">${E(s.estatus)}</span></td>
-      <td class="p-3 text-center">${s.urlDoc ? `<a href="${E(s.urlDoc)}" target="_blank" download class="text-blue-600 font-bold" title="Descargar PDF"><i class="fa-solid fa-download"></i></a>` : '—'}</td></tr>`).join('')
-      : '<tr><td colspan="6" class="p-4 text-center text-slate-500">No hay servicios registrados.</td></tr>';
-  };
-  window.cargarServiciosTecnico = async () => {
-    const d = await api('/api/servicios'), c = $('lista-servicios-tecnico');
-    c.innerHTML = d.servicios.length ? d.servicios.map(s => `<div class="bg-white p-4 rounded-xl border shadow-sm flex justify-between items-center">
-      <div><span class="font-bold text-slate-900 text-sm">${E(s.folio)} · ${E(s.motivo)}</span><div class="text-xs text-slate-500">${E(s.cliente)} | ${E(s.lugar)} | ${E(s.fecha)} ${E(s.hora)}</div></div>
-      ${s.urlDoc ? `<a href="${E(s.urlDoc)}" download class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg">Descargar PDF</a>`
-        : `<button data-f="${E(s.folio)}" onclick="seleccionarFolioTecnico(this.dataset.f)" class="px-4 py-2 bg-brandOrange text-white text-xs font-bold rounded-lg shadow">Llenar ODS y fotos</button>`}</div>`).join('')
-      : '<div class="p-4 bg-white rounded-xl border text-slate-500 text-xs">No tienes servicios asignados.</div>';
-  };
-  window.crearServicioCoordinador = async e => {
-    e.preventDefault(); const f = $('form-nuevo-servicio');
-    try {
-      const d = await api('/api/servicios', J(Object.fromEntries(new FormData(f).entries())));
-      if (!d.exito) return alert(d.error); alert('Servicio creado y asignado.'); f.reset(); llenarTecnicos(); switchTab('tab-coord-servicios');
-    } catch (x) { alert('Error al guardar el servicio.'); }
-  };
-  window.registrarInstalador = async e => {
-    e.preventDefault();
-    const d = await api('/api/instaladores', J({ nombre: $('nuevo-nombre').value, usuario: $('nuevo-usuario').value, password: $('nuevo-password').value }));
-    if (!d.exito) return alert(d.error);
-    alert('Técnico registrado.'); ['nuevo-nombre', 'nuevo-usuario', 'nuevo-password'].forEach(i => $(i).value = ''); llenarTecnicos();
-  };
- 
-  // Firmas en el formulario del técnico
-  const pad = c => {
-    const x = c.getContext('2d'); x.lineWidth = 2.4; x.lineCap = 'round'; let d = false;
-    const p = e => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; };
-    c.onpointerdown = e => { d = true; c.setPointerCapture(e.pointerId); x.beginPath(); x.moveTo(...p(e)); };
-    c.onpointermove = e => { if (d) { x.lineTo(...p(e)); x.stroke(); c.dataset.f = 1; } };
-    c.onpointerup = () => d = false;
-  };
-  const limpiar = c => { c.getContext('2d').clearRect(0, 0, c.width, c.height); delete c.dataset.f; };
-  $('btn-generar-ods').insertAdjacentHTML('beforebegin', `<div class="space-y-3"><h4 class="text-xs font-bold text-slate-700 uppercase">Firmas</h4>
-    <input id="firma-nombre" class="w-full px-4 py-2 border rounded-lg text-sm" placeholder="Nombre de quien recibe (cliente)">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      ${[['firma-cliente', 'Firma del cliente'], ['firma-tecnico', 'Firma del técnico']].map(([id, l]) => `<div><div class="text-xs font-semibold text-slate-600 mb-1">${l}</div>
-        <canvas id="${id}" width="500" height="160" class="w-full bg-white border-2 border-dashed border-slate-300 rounded-lg" style="touch-action:none"></canvas>
-        <button type="button" data-clr="${id}" class="text-xs text-slate-500 underline">Borrar</button></div>`).join('')}
-    </div></div>`);
-  ['firma-cliente', 'firma-tecnico'].forEach(id => pad($(id)));
-  document.querySelectorAll('[data-clr]').forEach(b => b.onclick = () => limpiar($(b.dataset.clr)));
-  $('btn-generar-ods').textContent = 'Generar y descargar ODS en PDF';
- 
-  window.enviarODSCompleto = async e => {
-    e.preventDefault(); const f = $('form-ods-completo'), fd = new FormData(f), b = $('btn-generar-ods'), c1 = $('firma-cliente'), c2 = $('firma-tecnico');
-    if (!c1.dataset.f || !c2.dataset.f) return alert('Faltan las firmas del cliente y del técnico.');
-    fd.append('firmaCliente', c1.toDataURL('image/png')); fd.append('firmaTecnico', c2.toDataURL('image/png')); fd.append('nombreCliente', $('firma-nombre').value);
-    b.disabled = true; b.textContent = 'Generando PDF...';
-    try {
-      const d = await api('/api/generar-ods', { method: 'POST', body: fd });
-      if (!d.exito) throw new Error(d.error || 'No se pudo generar');
-      const l = $('link-descarga'); l.href = d.descargaUrl; l.setAttribute('download', 'ODS_' + fd.get('folioAcuerdo') + '.pdf'); $('resultado-ods').classList.remove('hidden');
-      l.click(); f.reset(); limpiar(c1); limpiar(c2);
-    } catch (x) { alert('Error: ' + x.message); }
-    finally { b.disabled = false; b.textContent = 'Generar y descargar ODS en PDF'; }
-  };
- 
-  // Importar el Excel de servicios (solo coordinador)
-  $('tab-coord-servicios').insertAdjacentHTML('afterbegin', `<label class="inline-flex items-center px-4 py-2 bg-white border rounded-lg text-xs font-bold text-slate-700 cursor-pointer shadow-sm">
-    Importar Excel de servicios<input type="file" id="xl" accept=".xlsx,.xls" class="hidden"></label>`);
-  $('xl').onchange = async e => {
-    const fd = new FormData(); fd.append('archivo', e.target.files[0]);
-    const d = await api('/api/servicios/importar', { method: 'POST', body: fd }); e.target.value = '';
-    alert(d.exito ? `${d.cargados} servicios cargados. Repetidos: ${d.repetidos}. Filas incompletas: ${d.filasIncompletas.join(', ') || 'ninguna'}.` : d.error);
-    cargarServiciosCoordinador();
-  };
- 
-  // Restaurar sesión al abrir la página
-  if (localStorage.getItem('tk')) api('/api/yo').then(d => d.exito && entrar(d.usuario)).catch(() => {});
-})();
-  </body>
+// Restaurar sesión
+if(localStorage.getItem('tk'))api('/api/yo').then(d=>d.exito&&entrar(d.usuario)).catch(()=>{});
+</script>
+</body>
 </html>
