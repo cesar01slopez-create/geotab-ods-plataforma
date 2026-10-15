@@ -225,4 +225,82 @@ app.get('/api/exportar/excel', (req, res) => {
     }
 });
 
+// Almacenamiento autónomo en la memoria del servidor
+let listaServicios = [
+    { id: 1, folio: "ODS-1001", unidad: "Unit-01", operador: "Cesar", detalle: "Mantenimiento preventivo", salud: "Óptima", kpi: "98%", fecha: "2026-10-15" }
+];
+
+// 1. Obtener todos los servicios registrados
+app.get('/api/servicios', (req, res) => {
+    res.json({ success: true, servicios: listaServicios });
+});
+
+// 2. Registrar un servicio de forma manual y autónoma desde la plataforma
+app.post('/api/servicios', express.json(), (req, res) => {
+    try {
+        const nuevoServicio = {
+            id: listaServicios.length + 1,
+            folio: `ODS-2026-${String(listaServicios.length + 1).padStart(3, '0')}`,
+            unidad: req.body.unidad || "Sin unidad",
+            operador: req.body.operador || "General",
+            detalle: req.body.detalle || "Servicio general de flota",
+            salud: req.body.salud || "Óptima",
+            kpi: req.body.kpi || "95%",
+            fecha: new Date().toISOString().split('T')[0]
+        };
+        
+        listaServicios.push(nuevoServicio);
+        res.json({ success: true, message: "¡Servicio registrado exitosamente!", servicio: nuevoServicio });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 3. Modificar la Carga Masiva para que guarde los datos en la lista autónoma
+app.post('/api/servicios/masivo', upload.single('file'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: "No se subió ningún archivo Excel." });
+        }
+        const workbook = xlsx.readFile(req.file.path);
+        const sheetName = workbook.SheetNames[0];
+        const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+        
+        // Agregar cada fila del Excel a nuestra lista autónoma
+        data.forEach((item, index) => {
+            listaServicios.push({
+                id: listaServicios.length + 1,
+                folio: item.Folio || `ODS-MASIVO-${index + 1}`,
+                unidad: item.Unidad || "Desconocida",
+                operador: item.Operador || "N/A",
+                detalle: item.Detalle || item.Diagnostico || "Carga masiva Excel",
+                salud: item.Salud || "Óptima",
+                kpi: item.KPI || "90%",
+                fecha: new Date().toISOString().split('T')[0]
+            });
+        });
+
+        res.json({ success: true, message: `¡Carga masiva exitosa! Se añadieron ${data.length} servicios al sistema autónomo.` });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 4. Hacer que el reporte de Excel descargable use la información real autónoma
+app.get('/api/exportar/excel', (req, res) => {
+    try {
+        const worksheet = xlsx.utils.json_to_sheet(listaServicios);
+        const workbook = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(workbook, worksheet, "Flota_Servicios_KPIs");
+
+        const buffer = xlsx.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+        
+        res.setHeader('Content-Disposition', 'attachment; filename="Reporte_General_Geotab.xlsx"');
+        res.type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.send(buffer);
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.listen(PORT, () => console.log(`Servidor activo en el puerto ${PORT}`));
