@@ -11,13 +11,14 @@ const PORT = process.env.PORT || 3000;
 // Configuración de middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Configuración de Multer para almacenamiento temporal de fotos
+// Servir la carpeta 'public' en la raíz de los archivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Configuración de Multer para archivos
 const upload = multer({ dest: 'uploads/' });
 
-// Memoria autónoma del sistema
+// Memoria del sistema
 let listaServicios = [
     {
         id: 1,
@@ -32,18 +33,18 @@ let listaServicios = [
     }
 ];
 
-let historialInstalaciones = [];
-
 // --- RUTA: LOGIN ---
 app.post('/api/login', (req, res) => {
     const { usuario, password } = req.body;
     if (!usuario || !password) {
         return res.status(400).json({ exito: false, error: 'Usuario y contraseña obligatorios.' });
     }
+    const userLower = usuario.toLowerCase();
+    const esTecnico = userLower.includes('tec') || userLower.includes('armando') || userLower.includes('instalador');
     return res.json({
         exito: true,
         mensaje: 'Sesión iniciada correctamente',
-        rol: (usuario.toLowerCase().includes('tec') || usuario.toLowerCase().includes('armando')) ? 'tecnico' : 'coordinador'
+        rol: esTecnico ? 'tecnico' : 'coordinador'
     });
 });
 
@@ -83,7 +84,7 @@ app.post('/api/instaladores', (req, res) => {
     return res.json({ exito: true, mensaje: 'Instalador registrado con éxito' });
 });
 
-// --- RUTA: GENERAR ODS (Plantilla Word Oficial) ---
+// --- RUTA: GENERAR ODS (Word Oficial) ---
 app.post('/api/generar-ods', upload.fields([
     { name: 'foto_adherible', maxCount: 1 },
     { name: 'foto_imei_camara', maxCount: 1 },
@@ -140,20 +141,27 @@ app.post('/api/generar-ods', upload.fields([
         }
 
         const hostUrl = req.protocol + '://' + req.get('host');
-        const fileUrl = `${hostUrl}/public/${outputFilename}`;
+        // AQUÍ ESTABA EL ERROR: No debemos agregar '/public/' a la URL final
+        const fileUrl = `${hostUrl}/${outputFilename}`;
 
-        // Actualizar o registrar en servicios
-        listaServicios.push({
-            id: listaServicios.length + 1,
-            folio: `ODS-${folioAcuerdo}`,
-            unidad: vinVehiculo || `Unidad-${folioAcuerdo}`,
-            operador: "ARMANDO GUTIERREZ",
-            detalle: comentarioTecnico || "Instalación completada",
-            salud: "Óptima",
-            kpi: "100%",
-            fecha: new Date().toISOString().split('T')[0],
-            urlDoc: fileUrl
-        });
+        // Guardar o actualizar en lista
+        const index = listaServicios.findIndex(s => s.folio.includes(folioAcuerdo));
+        if (index !== -1) {
+            listaServicios[index].urlDoc = fileUrl;
+            listaServicios[index].salud = "Completado";
+        } else {
+            listaServicios.push({
+                id: listaServicios.length + 1,
+                folio: `ODS-${folioAcuerdo}`,
+                unidad: vinVehiculo || `Unidad-${folioAcuerdo}`,
+                operador: "ARMANDO GUTIERREZ",
+                detalle: comentarioTecnico || "Instalación completada",
+                salud: "Completado",
+                kpi: "100%",
+                fecha: new Date().toISOString().split('T')[0],
+                urlDoc: fileUrl
+            });
+        }
 
         return res.json({
             exito: true,
