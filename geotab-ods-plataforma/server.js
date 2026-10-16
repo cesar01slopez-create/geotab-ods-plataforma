@@ -4,10 +4,11 @@ const express = require('express'), cors = require('cors'), multer = require('mu
 
 const PORT = process.env.PORT || 3000;
 const DIR = process.env.DATA_DIR || __dirname;          // En Render/Railway apunta a un disco persistente
-const FILE = path.join(DIR, 'db.json'), ODS = path.join(DIR, 'ods');
+const FILE = path.join(DIR, 'db.json'), ODS = path.join(DIR, 'ods'), SRC = path.join(DIR, 'src');
 const LOGO = path.join(__dirname, 'public', 'logo-att.png');
 const SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 fs.mkdirSync(ODS, { recursive: true });
+fs.mkdirSync(SRC, { recursive: true });   // fotos y firmas originales (no públicas) para regenerar el PDF al editar
 
 let db = { usuarios: [], servicios: [] };
 try { db = JSON.parse(fs.readFileSync(FILE, 'utf8')); } catch (e) {}
@@ -42,7 +43,19 @@ app.use(cors()); app.use(express.json({ limit: '2mb' }));
 app.use('/ods', express.static(ODS));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/api/version', (req, res) => res.json({ version: '3.3' }));   // para comprobar que corre el servidor nuevo
+app.get('/api/version', (req, res) => res.json({ version: '3.4' }));   // para comprobar que corre el servidor nuevo
+
+// ---------- Partes eléctricas ----------
+const PE = ['Intermitentes/direccionales', 'Luces delanteras', 'Stop', 'Limpia parabrisas', 'Limpiador trasero', '¿Enciende algún testigo en el tablero?', 'Encendedor', 'Radio',
+  'Elevadores eléctricos', 'Seguros eléctricos', '¿Cuenta con alarma? ¿funciona?', 'Espejos laterales eléctricos', 'Luces interiores', 'Cámara de reversa', 'Aire acondicionado', 'Claxon'];
+// Valida la lista que manda el navegador y la normaliza con los nombres oficiales del servidor.
+function parsePE(raw) {
+  let a; try { a = typeof raw === 'string' ? JSON.parse(raw) : raw; } catch (e) { return null; }
+  if (!Array.isArray(a) || a.length !== PE.length) return null;
+  const v = a.map(x => x && x.v);
+  if (!v.every(x => ['si', 'no', 'na'].includes(x))) return null;
+  return PE.map((c, i) => ({ c, v: v[i] }));
+}
 
 // ---------- Sesión ----------
 const fallos = {};   // límite de intentos: 8 fallos por IP cada 15 minutos
@@ -71,25 +84,32 @@ app.put('/api/yo/password', auth, (req, res) => {
   u.hash = bcrypt.hashSync(nueva, 10); delete u.debeCambiar; save(); ok(res);
 });
 
-// ---------- Instaladores ----------
-app.get('/api/instaladores', auth, coord, (req, res) => ok(res, { instaladores: db.usuarios.filter(u => u.rol === 'tec').map(({ hash, ...u }) => u) }));
+// ---------- Usuarios: técnicos y coordinadores ----------
+// (la ruta se llama /instaladores por compatibilidad con el frontend; ahora devuelve ambos roles)
+app.get('/api/instaladores', auth, coord, (req, res) => ok(res, { instaladores: db.usuarios.map(({ hash, ...u }) => u) }));
 app.post('/api/instaladores', auth, coord, (req, res) => {
   const usuario = t(req.body.usuario).toLowerCase(), nombre = t(req.body.nombre), pass = String(req.body.password || '');
+  const rol = t(req.body.rol) === 'coord' ? 'coord' : 'tec';
   if (!usuario || !nombre || pass.length < 6) return bad(res, 400, 'Falta usuario, nombre o contraseña (mínimo 6 caracteres)');
   if (db.usuarios.some(u => u.usuario === usuario)) return bad(res, 409, 'Ese usuario ya existe');
-  db.usuarios.push({ usuario, nombre, rol: 'tec', hash: bcrypt.hashSync(pass, 10) }); save(); ok(res);
+  const nuevo = { usuario, nombre, rol, hash: bcrypt.hashSync(pass, 10) };
+  if (rol === 'coord') { nuevo.debeCambiar = true; nuevo.creadoPor = req.u.usuario; }   // el coordinador nuevo debe poner su propia contraseña
+  db.usuarios.push(nuevo); save(); ok(res);
 });
 app.put('/api/instaladores/:usuario', auth, coord, (req, res) => {
   const u = db.usuarios.find(x => x.usuario === req.params.usuario);
   if (!u || String(req.body.password || '').length < 6) return bad(res, 400, 'Usuario no encontrado o contraseña muy corta');
-  u.hash = bcrypt.hashSync(req.body.password, 10); save(); ok(res);
+  u.hash = bcrypt.hashSync(req.body.password, 10); if (u.rol === 'coord' && u.usuario !== req.u.usuario) u.debeCambiar = true; save(); ok(res);
 });
 app.delete('/api/instaladores/:usuario', auth, coord, (req, res) => {
-  db.usuarios = db.usuarios.filter(u => !(u.usuario === req.params.usuario && u.rol === 'tec')); save(); ok(res);
+  const u = db.usuarios.find(x => x.usuario === req.params.usuario);
+  if (!u) return ok(res);
+  if (u.usuario === req.u.usuario) return bad(res, 400, 'No puedes eliminar tu propio usuario');
+  db.usuarios = db.usuarios.filter(x => x.usuario !== u.usuario); save(); ok(res);
 });
 
 // ---------- Servicios ----------
-const vista = s => ({ ...s, unidad: s.cliente, operador: s.tecnico });
+const vista = ({ src, historialPE, ...s }) => ({ ...s, unidad: s.cliente, operador: s.tecnico });
 app.get('/api/servicios', auth, (req, res) => {
   const l = req.u.rol === 'coord' ? db.servicios : db.servicios.filter(s => nm(s.tecnico) === nm(req.u.nombre));
   ok(res, { servicios: l.slice().reverse().map(vista) });
@@ -105,6 +125,7 @@ app.post('/api/servicios', auth, coord, (req, res) => {
   save(); ok(res);
 });
 app.delete('/api/servicios/:folio', auth, coord, (req, res) => {
+  db.servicios.filter(s => nm(s.folio) === nm(req.params.folio)).forEach(s => borrarFuentes(s));
   db.servicios = db.servicios.filter(s => nm(s.folio) !== nm(req.params.folio)); save(); ok(res);
 });
 // Alta masiva con tu Plantilla_servicios_ATT.xlsx
@@ -144,7 +165,31 @@ function row(d, a) {
   a.forEach((_, i) => { const x = 40 + i * (532 / a.length); d.moveTo(x, e + 1).lineTo(x + w - 8, e + 1).lineWidth(.4).strokeColor('#111').stroke(); });
   d.x = 40; d.y = e + 9;
 }
-function dataImg(u) { return u && u.startsWith('data:image') ? Buffer.from(u.split(',')[1], 'base64') : null; }
+function dataImg(u) { return Buffer.isBuffer(u) ? u : (u && typeof u === 'string' && u.startsWith('data:image') ? Buffer.from(u.split(',')[1], 'base64') : null); }
+
+// Tabla "Partes eléctricas funcionando": 2 columnas de 8 conceptos, con Sí / No / N/A
+function tablaPE(d, s) {
+  const lista = s.partesElectricas; if (!lista || !lista.length) return;
+  if (d.y > 560) d.addPage();
+  band(d, 'PARTES ELÉCTRICAS FUNCIONANDO');
+  const y0 = d.y, H = 13, W = 262, NW = 148, CW = (W - NW) / 3;
+  [0, 1].forEach(h => {
+    const x0 = 40 + h * 270;
+    d.rect(x0, y0, W, H).fill(CY);
+    d.font('Helvetica-Bold').fontSize(7.5).fillColor('#fff').text('Descripción', x0 + 4, y0 + 3.5, { width: NW, lineBreak: false });
+    ['Sí', 'No', 'N/A'].forEach((l, c) => d.text(l, x0 + NW + c * CW, y0 + 3.5, { width: CW, align: 'center', lineBreak: false }));
+  });
+  lista.forEach((it, i) => {
+    const h = i < 8 ? 0 : 1, r = i % 8, x0 = 40 + h * 270, y = y0 + H + r * H;
+    d.rect(x0, y, W, H).lineWidth(.5).strokeColor('#111').stroke();
+    [0, 1, 2].forEach(c => d.moveTo(x0 + NW + c * CW, y).lineTo(x0 + NW + c * CW, y + H).stroke());
+    d.font('Helvetica').fontSize(7.5).fillColor('#111').text(it.c, x0 + 4, y + 3.5, { width: NW - 6, lineBreak: false });
+    const c = { si: 0, no: 1, na: 2 }[it.v];
+    if (c !== undefined) d.font('Helvetica-Bold').fontSize(9).text('X', x0 + NW + c * CW, y + 2.5, { width: CW, align: 'center', lineBreak: false });
+  });
+  d.x = 40; d.y = y0 + H + 8 * H + 8;
+  row(d, [['Observaciones de partes eléctricas', s.obsElectricas]]);
+}
 
 function renderODS(d, s, files, b) {
   if (fs.existsSync(LOGO)) d.image(LOGO, 40, 28, { height: 36 }); else d.font('Helvetica-Bold').fontSize(9).fillColor(CY).text('AT&T', 40, 40); d.fillColor('#111').font('Helvetica').fontSize(15).text('Orden de servicio de la flotilla', 40, 38, { width: 532, align: 'center' });
@@ -166,6 +211,7 @@ function renderODS(d, s, files, b) {
   band(d, 'EQUIPO INSTALADO');
   row(d, [['Serie GO9', s.serie], ['IMEI cámara', s.imei]]); row(d, [['Arnés', s.arnes], ['Número de SIM', s.sim]]);
   row(d, [['Marca', s.marca], ['Modelo', s.modelo], ['Placas', s.placas]]); row(d, [['VIN', s.vin]]); row(d, [['Comentario del técnico / Observaciones', s.comentario]]);
+  tablaPE(d, s);
 
   const fotos = [['Foto del adherible GO9', files.foto_adherible], ['Foto IMEI y SIM de cámara', files.foto_imei_camara], ['Foto del VIN', files.foto_vin]]
     .map(([l, a]) => [l, a && a[0]]).concat(Object.keys(files).filter(k => !['foto_adherible', 'foto_imei_camara', 'foto_vin'].includes(k))
@@ -192,6 +238,39 @@ function renderODS(d, s, files, b) {
   d.font('Helvetica').fontSize(7.5).fillColor('#555').text('Nota: Recuerda que antes de concluir tu visita, es necesario comunicarte a Call Center para que nuestro cliente responda la encuesta de satisfacción. Posteriormente debes compartir el estatus de tu visita al ejecutivo. CC: 55-7100-2854. Soporte Técnico CLIENTE comunicarse al 01 800 211 4012', 40, d.y, { width: 532 });
 }
 
+// Genera el PDF en disco y devuelve su nombre de archivo
+async function crearPDF(s, files, b) {
+  const name = `ODS_${s.folio.replace(/[^\w-]/g, '')}_${crypto.randomBytes(4).toString('hex')}.pdf`;
+  const doc = new PDFDocument({ size: 'LETTER', margin: 40, bufferPages: true }), out = fs.createWriteStream(path.join(ODS, name));
+  doc.pipe(out); renderODS(doc, s, files, b);
+  const rg = doc.bufferedPageRange(), gen = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+  for (let i = 0; i < rg.count; i++) {
+    doc.switchToPage(i); const mb = doc.page.margins.bottom; doc.page.margins.bottom = 0;
+    doc.font('Helvetica').fontSize(8).fillColor('#888').text(`${s.folio}  ·  Página ${i + 1} de ${rg.count}  ·  Generado el ${gen}`, 40, 760, { width: 532, align: 'center', lineBreak: false });
+    doc.page.margins.bottom = mb;
+  }
+  doc.end();
+  await new Promise((r, j) => { out.on('finish', r); out.on('error', j); });
+  return name;
+}
+
+// Fotos y firmas originales se guardan fuera de /ods para poder regenerar el PDF cuando el coordinador edite
+function borrarFuentes(s) { if (s.src) try { fs.rmSync(path.join(SRC, s.src.id), { recursive: true, force: true }); } catch (e) {} }
+function guardarFuentes(s, files, b) {
+  borrarFuentes(s);
+  const id = crypto.randomBytes(8).toString('hex'), dir = path.join(SRC, id), lista = []; let n = 0;
+  fs.mkdirSync(dir, { recursive: true });
+  Object.entries(files).forEach(([k, arr]) => arr.forEach(f => { const nombre = (n++) + '.jpg'; fs.writeFileSync(path.join(dir, nombre), f.buffer); lista.push({ k, nombre }); }));
+  ['firmaCliente', 'firmaTecnico'].forEach(k => { const buf = dataImg(b[k]); if (buf) fs.writeFileSync(path.join(dir, k + '.png'), buf); });
+  s.src = { id, lista, nombreCliente: t(b.nombreCliente) };
+}
+function leerFuentes(s) {
+  const dir = path.join(SRC, s.src.id), files = {};
+  s.src.lista.forEach(({ k, nombre }) => (files[k] = files[k] || []).push({ buffer: fs.readFileSync(path.join(dir, nombre)) }));
+  const rd = n => { const p = path.join(dir, n); return fs.existsSync(p) ? fs.readFileSync(p) : null; };
+  return { files, b: { firmaCliente: rd('firmaCliente.png'), firmaTecnico: rd('firmaTecnico.png'), nombreCliente: s.src.nombreCliente } };
+}
+
 const campos = up.any();
 const agrupa = l => (l || []).reduce((o, f) => ((o[f.fieldname] = o[f.fieldname] || []).push(f), o), {});
 app.post('/api/generar-ods', auth, campos, async (req, res) => {
@@ -199,22 +278,37 @@ app.post('/api/generar-ods', auth, campos, async (req, res) => {
     const b = req.body, s = db.servicios.find(x => nm(x.folio) === nm(b.folioAcuerdo));
     if (!s) return bad(res, 404, 'Folio no encontrado');
     if (req.u.rol !== 'coord' && nm(s.tecnico) !== nm(req.u.nombre)) return bad(res, 403, 'Ese servicio no está asignado a ti');
+    if (req.u.rol !== 'coord' && s.estatus === 'Completado') return bad(res, 403, 'Este servicio ya está cerrado; pide al coordinador que lo modifique');
+    const pe = parsePE(b.partesElectricas);
+    if (!pe) return bad(res, 400, 'Falta contestar todas las partes eléctricas (Sí / No / N/A)');
     Object.assign(s, { serie: t(b.serialGo9), imei: t(b.imeiCamara), sim: t(b.numeroSim), arnes: t(b.arnes), marca: t(b.marcaVehiculo), modelo: t(b.modeloVehiculo),
-      vin: t(b.vinVehiculo).toUpperCase(), placas: t(b.placasVehiculo).toUpperCase(), comentario: t(b.comentarioTecnico) });
-    const name = `ODS_${s.folio.replace(/[^\w-]/g, '')}_${crypto.randomBytes(4).toString('hex')}.pdf`;
-    const doc = new PDFDocument({ size: 'LETTER', margin: 40, bufferPages: true }), out = fs.createWriteStream(path.join(ODS, name));
-    doc.pipe(out); renderODS(doc, s, agrupa(req.files), b);
-    const rg = doc.bufferedPageRange(), gen = new Date().toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
-    for (let i = 0; i < rg.count; i++) {
-      doc.switchToPage(i); const mb = doc.page.margins.bottom; doc.page.margins.bottom = 0;
-      doc.font('Helvetica').fontSize(8).fillColor('#888').text(`${s.folio}  ·  Página ${i + 1} de ${rg.count}  ·  Generado el ${gen}`, 40, 760, { width: 532, align: 'center', lineBreak: false });
-      doc.page.margins.bottom = mb;
-    }
-    doc.end();
-    await new Promise((r, j) => { out.on('finish', r); out.on('error', j); });
+      vin: t(b.vinVehiculo).toUpperCase(), placas: t(b.placasVehiculo).toUpperCase(), comentario: t(b.comentarioTecnico),
+      partesElectricas: pe, obsElectricas: t(b.observacionesElectricas) });
+    const files = agrupa(req.files);
+    const name = await crearPDF(s, files, b);
+    guardarFuentes(s, files, b);
     s.estatus = 'Completado'; s.urlDoc = '/ods/' + name; save();
     ok(res, { descargaUrl: s.urlDoc });
   } catch (e) { console.error(e); bad(res, 500, 'No se pudo generar el PDF: ' + e.message); }
+});
+
+// El coordinador corrige las partes eléctricas; se guarda quién y cuándo, y se regenera el PDF
+app.put('/api/servicios/:folio/partes-electricas', auth, coord, async (req, res) => {
+  try {
+    const s = db.servicios.find(x => nm(x.folio) === nm(req.params.folio));
+    if (!s) return bad(res, 404, 'Folio no encontrado');
+    const pe = parsePE(req.body.partesElectricas);
+    if (!pe) return bad(res, 400, 'Hay que contestar todas las partes eléctricas (Sí / No / N/A)');
+    (s.historialPE = s.historialPE || []).push({ por: req.u.usuario, fecha: new Date().toISOString(), antes: s.partesElectricas || null, obsAntes: s.obsElectricas || '' });
+    s.partesElectricas = pe; s.obsElectricas = t(req.body.observaciones);
+    let pdfActualizado = false;
+    if (s.src) {   // servicios capturados con esta versión: se puede regenerar el PDF completo
+      const { files, b } = leerFuentes(s), viejo = s.urlDoc, name = await crearPDF(s, files, b);
+      s.urlDoc = '/ods/' + name; pdfActualizado = true;
+      if (viejo) try { fs.unlinkSync(path.join(ODS, path.basename(viejo))); } catch (e) {}
+    }
+    save(); ok(res, { pdfActualizado });
+  } catch (e) { console.error(e); bad(res, 500, 'No se pudo actualizar: ' + e.message); }
 });
 
 app.listen(PORT, () => console.log('FLOTAS en puerto ' + PORT));
