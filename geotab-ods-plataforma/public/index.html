@@ -95,20 +95,21 @@
    </div>
   </div>
 
-  <!-- COORDINADOR: Instaladores -->
+  <!-- COORDINADOR: Usuarios (técnicos y coordinadores) -->
   <div id="tab-instaladores" class="pane hidden space-y-4">
    <div class="bg-white p-6 rounded-xl shadow-sm border">
-    <h3 class="text-sm font-bold mb-1"><i class="fa-solid fa-user-plus mr-2"></i>Dar de alta técnico o instalador</h3>
-    <p class="text-xs text-slate-500 mb-4">El nombre debe ser igual al de la lista del Excel (ej. CESAR SANCHEZ - CENTRO): con él se cruzan los servicios asignados.</p>
-    <form onsubmit="altaInstalador(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3">
-     <input id="n-nombre" required list="lista-tec" placeholder="Nombre del técnico" class="inp"><datalist id="lista-tec"></datalist>
+    <h3 class="text-sm font-bold mb-1"><i class="fa-solid fa-user-plus mr-2"></i>Dar de alta usuario</h3>
+    <p class="text-xs text-slate-500 mb-4">Para técnicos, el nombre debe ser igual al de la lista del Excel (ej. CESAR SANCHEZ - CENTRO): con él se cruzan los servicios asignados. Los coordinadores pueden crear servicios, usuarios y editar la información de los técnicos.</p>
+    <form onsubmit="altaInstalador(event)" class="grid grid-cols-1 md:grid-cols-5 gap-3">
+     <select id="n-rol" class="inp" onchange="cambiaRol()"><option value="tec">Técnico</option><option value="coord">Coordinador</option></select>
+     <input id="n-nombre" required list="lista-tec" placeholder="Nombre" class="inp"><datalist id="lista-tec"></datalist>
      <input id="n-usuario" required autocapitalize="none" placeholder="Usuario" class="inp">
      <input id="n-pass" required minlength="6" placeholder="Contraseña (mín. 6)" class="inp">
      <button class="py-2.5 bg-brandOrange text-white text-xs font-bold rounded-lg shadow">Dar de alta</button>
     </form>
    </div>
    <div class="bg-white rounded-xl shadow-sm border overflow-x-auto">
-    <table class="w-full text-left text-xs min-w-[520px]"><thead><tr class="bg-slate-800 text-white"><th class="p-3">Instalador</th><th class="p-3">Usuario</th><th class="p-3">Nueva contraseña</th><th class="p-3"></th></tr></thead><tbody id="tabla-inst" class="divide-y divide-slate-100"></tbody></table>
+    <table class="w-full text-left text-xs min-w-[620px]"><thead><tr class="bg-slate-800 text-white"><th class="p-3">Nombre</th><th class="p-3">Rol</th><th class="p-3">Usuario</th><th class="p-3">Nueva contraseña</th><th class="p-3"></th></tr></thead><tbody id="tabla-inst" class="divide-y divide-slate-100"></tbody></table>
    </div>
   </div>
 
@@ -145,6 +146,16 @@
       <div><label class="lbl">VIN (17 caracteres)</label><input name="vinVehiculo" maxlength="17" autocapitalize="characters" class="inp"></div>
       <div><label class="lbl">Placas</label><input name="placasVehiculo" autocapitalize="characters" class="inp"></div>
      </div>
+
+     <!-- NUEVO: Partes eléctricas funcionando -->
+     <div class="p-4 bg-amber-50/60 rounded-xl border border-amber-200 space-y-3">
+      <h4 class="text-xs font-bold text-amber-900 uppercase"><i class="fa-solid fa-bolt mr-1"></i>Partes eléctricas funcionando *</h4>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div id="pe-tabla" class="md:col-span-2 overflow-x-auto"></div>
+       <div><label class="lbl">Observaciones de partes eléctricas</label><textarea name="observacionesElectricas" rows="8" class="inp" placeholder="Ej. Ok"></textarea></div>
+      </div>
+     </div>
+
      <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100 space-y-3">
       <h4 class="text-xs font-bold text-blue-900 uppercase">Evidencias fotográficas</h4>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -180,7 +191,9 @@
 const $=id=>document.getElementById(id);
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MOT=['Instalación','Desinstalación','Reinstalación','Revisión','Reemplazo','Intercambio','Remover','Visita en falso'];
-const TABS={coord:[['tab-servicios','Servicios'],['tab-nuevo','Nuevo servicio'],['tab-instaladores','Instaladores'],['tab-kpi','KPI']],tec:[['tab-mis','Mis servicios'],['tab-captura','Capturar ODS']]};
+const TABS={coord:[['tab-servicios','Servicios'],['tab-nuevo','Nuevo servicio'],['tab-instaladores','Usuarios'],['tab-kpi','KPI']],tec:[['tab-mis','Mis servicios'],['tab-captura','Capturar ODS']]};
+const PE=['Intermitentes/direccionales','Luces delanteras','Stop','Limpia parabrisas','Limpiador trasero','¿Enciende algún testigo en el tablero?','Encendedor','Radio','Elevadores eléctricos','Seguros eléctricos','¿Cuenta con alarma? ¿funciona?','Espejos laterales eléctricos','Luces interiores','Cámara de reversa','Aire acondicionado','Claxon'];
+const PE_L={si:'Sí',no:'No',na:'N/A'};
 let me=null,servicios=[],filtro='Todos';
 
 function toast(m,mal){const t=$('toast');t.textContent=m;t.className='fixed left-1/2 -translate-x-1/2 bottom-6 z-50 px-4 py-2 rounded-lg text-sm text-white shadow-lg max-w-[90vw] '+(mal?'bg-red-600':'bg-slate-800');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.add('hidden'),3500)}
@@ -191,6 +204,19 @@ async function api(u,o={}){
  return r.json();
 }
 const enviar=(u,b,m='POST')=>api(u,{method:m,headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
+
+// ---------- Partes eléctricas ----------
+// Tabla con radios Sí / No / N/A. pref = prefijo del name; vals = [{c,v}] para precargar.
+function peTabla(pref,vals){
+ return `<table class="w-full text-xs border border-slate-300 bg-white"><thead><tr class="bg-sky-500 text-white"><th class="p-2 text-left">Descripción</th><th class="p-2 w-12">Sí</th><th class="p-2 w-12">No</th><th class="p-2 w-12">N/A</th></tr></thead><tbody>`
+ +PE.map((c,i)=>`<tr class="border-t border-slate-200"><td class="p-2">${E(c)}</td>${['si','no','na'].map(v=>`<td class="text-center"><input type="radio" name="${pref}${i}" value="${v}" required ${vals&&vals[i]&&vals[i].v===v?'checked':''} class="w-5 h-5 accent-orange-500"></td>`).join('')}</tr>`).join('')
+ +`</tbody></table>`;
+}
+const peValores=pref=>PE.map((c,i)=>({c,v:(document.querySelector(`input[name="${pref}${i}"]:checked`)||{}).value||''}));
+function peSolo(vals){
+ if(!vals||!vals.length)return '<div class="text-xs text-slate-400">Sin captura de partes eléctricas.</div>';
+ return `<table class="w-full text-xs border border-slate-200"><tbody>`+vals.map(x=>`<tr class="border-t"><td class="p-1.5">${E(x.c)}</td><td class="p-1.5 text-right font-bold ${x.v==='no'?'text-red-600':x.v==='si'?'text-emerald-600':'text-slate-400'}">${PE_L[x.v]||'—'}</td></tr>`).join('')+`</tbody></table>`;
+}
 
 // ---------- Sesión ----------
 async function handleLogin(e){
@@ -209,6 +235,7 @@ function entrar(u){
  $('user-role-display').textContent=c?'Coordinador AT&T':'Instalador / Técnico de campo';
  $('nav').innerHTML=TABS[c?'coord':'tec'].map(([id,l])=>`<button data-tab="${id}" onclick="tab('${id}')" class="nav-btn whitespace-nowrap px-4 py-2 rounded-full text-slate-300 hover:text-white hover:bg-slate-800">${l}</button>`).join('');
  if(c)cargarTecnicos();
+ else $('pe-tabla').innerHTML=peTabla('ele_');
  tab(c?'tab-servicios':'tab-mis');
  if(u.debeCambiar)modalPass(true);
 }
@@ -259,29 +286,38 @@ function pintarKPI(){
  $('kpi-tec').innerHTML=grupo('tecnico');$('kpi-mot').innerHTML=grupo('motivo');
 }
 
-// ---------- Instaladores ----------
+// ---------- Usuarios (técnicos y coordinadores) ----------
+function cambiaRol(){
+ const c=$('n-rol').value==='coord';
+ $('n-nombre').placeholder=c?'Nombre del coordinador':'Nombre del técnico';
+ if(c)$('n-nombre').removeAttribute('list');else $('n-nombre').setAttribute('list','lista-tec');
+}
 async function cargarTecnicos(){
  const d=await api('/api/instaladores');if(!d.exito)return;
- $('sel-tec').innerHTML=d.instaladores.map(i=>`<option>${E(i.nombre)}</option>`).join('');
+ // Solo los técnicos se pueden asignar a un servicio (si el servidor aún no manda "rol", se asume técnico)
+ const soloTec=d.instaladores.filter(i=>!i.rol||i.rol==='tec');
+ $('sel-tec').innerHTML=soloTec.map(i=>`<option>${E(i.nombre)}</option>`).join('');
  $('sel-mot').innerHTML=MOT.map(m=>`<option>${m}</option>`).join('');
  $('lista-tec').innerHTML=['ALEXANDER - COL','ANGEL ZACARIAS - NORTE','ANTONIO PEREZ - SUR','ARMANDO GUTIERREZ - SUR','CARLOS LEAL - NORTE','CESAR SANCHEZ - CENTRO','DAVID RIVERA - CENTRO','FROYLAND CRUZ - NORTE','HECTOR FLORES - NORTE','JOSE PABLO GONZALEZ - CENTRO','MIGUEL GARCIA - NORTE','RODRIGO SANCHEZ - CENTRO','ROMAN HERVERT - CENTRO','VICTOR MENDOZA - CENTRO','YAEL FLORES - CENTRO'].map(n=>`<option value="${n}">`).join('');
  return d.instaladores;
 }
 async function cargarInstaladores(){
  const l=await cargarTecnicos()||[];
- $('tabla-inst').innerHTML=l.length?l.map(i=>`<tr><td class="p-3 font-bold">${E(i.nombre)}</td><td class="p-3">${E(i.usuario)}</td>
+ $('tabla-inst').innerHTML=l.length?l.map(i=>`<tr><td class="p-3 font-bold">${E(i.nombre)}</td>
+  <td class="p-3"><span class="px-2 py-0.5 rounded-full font-bold ${i.rol==='coord'?'bg-purple-100 text-purple-800':'bg-slate-100 text-slate-700'}">${i.rol==='coord'?'Coordinador':'Técnico'}</span></td>
+  <td class="p-3">${E(i.usuario)}</td>
   <td class="p-3"><div class="flex gap-2"><input id="pw-${E(i.usuario)}" placeholder="Nueva contraseña" class="inp !py-1"><button data-u="${E(i.usuario)}" onclick="cambiarPass(this.dataset.u)" class="px-3 text-xs font-bold bg-slate-800 text-white rounded-lg">Cambiar</button></div></td>
   <td class="p-3"><button data-u="${E(i.usuario)}" onclick="borrarInst(this.dataset.u)" class="text-red-500 text-xs font-bold">Eliminar</button></td></tr>`).join('')
-  :'<tr><td colspan="4" class="p-4 text-center text-slate-500">Aún no hay técnicos dados de alta.</td></tr>';
+  :'<tr><td colspan="5" class="p-4 text-center text-slate-500">Aún no hay usuarios dados de alta.</td></tr>';
 }
 async function altaInstalador(e){
  e.preventDefault();
- const d=await enviar('/api/instaladores',{nombre:$('n-nombre').value,usuario:$('n-usuario').value,password:$('n-pass').value});
+ const d=await enviar('/api/instaladores',{nombre:$('n-nombre').value,usuario:$('n-usuario').value,password:$('n-pass').value,rol:$('n-rol').value});
  if(!d.exito)return toast(d.error,1);
- toast('Técnico dado de alta');['n-nombre','n-usuario','n-pass'].forEach(i=>$(i).value='');cargarInstaladores();
+ toast($('n-rol').value==='coord'?'Coordinador dado de alta':'Técnico dado de alta');['n-nombre','n-usuario','n-pass'].forEach(i=>$(i).value='');cargarInstaladores();
 }
 async function cambiarPass(u){const p=$('pw-'+u).value,d=await enviar('/api/instaladores/'+encodeURIComponent(u),{password:p},'PUT');toast(d.exito?'Contraseña cambiada':d.error,!d.exito)}
-async function borrarInst(u){if(confirm('¿Eliminar al usuario '+u+'?')){await api('/api/instaladores/'+encodeURIComponent(u),{method:'DELETE'});cargarInstaladores()}}
+async function borrarInst(u){if(confirm('¿Eliminar al usuario '+u+'?')){const d=await api('/api/instaladores/'+encodeURIComponent(u),{method:'DELETE'});if(d&&d.exito===false)toast(d.error,1);cargarInstaladores()}}
 
 // ---------- Técnico ----------
 function pintarTec(){
@@ -319,7 +355,9 @@ async function enviarODS(e){
  b.disabled=true;b.textContent='Generando PDF…';
  try{
   const fd=new FormData();
-  new FormData(f).forEach((v,k)=>{if(!(v instanceof File))fd.append(k,v)});
+  // los radios "ele_N" no se mandan sueltos: se empaquetan en un solo campo JSON
+  new FormData(f).forEach((v,k)=>{if(!(v instanceof File)&&!k.startsWith('ele_'))fd.append(k,v)});
+  fd.append('partesElectricas',JSON.stringify(peValores('ele_')));
   for(const inp of f.querySelectorAll('input[type=file]'))for(const [i,file] of [...inp.files].entries())fd.append(inp.name,await comprimir(file),`${inp.name}_${i}.jpg`);
   fd.append('firmaCliente',c1.toDataURL('image/png'));fd.append('firmaTecnico',c2.toDataURL('image/png'));fd.append('nombreCliente',$('firma-nombre').value);
   const d=await api('/api/generar-ods',{method:'POST',body:fd});
@@ -357,11 +395,30 @@ function verServicio(f){
  <div class="grid grid-cols-2 gap-3">${r('Estatus',s.estatus)}${r('Motivo',s.motivo)}${r('Visita',s.fecha+' '+(s.hora||''))}${r('Técnico',s.tecnico)}${r('Cliente',s.cliente)}${r('Razón social',s.razon)}<div class="col-span-2">${r('Lugar de atención',s.lugar)}</div>${r('Recibe al técnico',s.recibe)}${r('Contacto',s.contacto)}${r('Ciudad',s.ciudad)}${r('Estado',s.edo)}</div>
  <h4 class="text-xs font-bold uppercase text-slate-500 mt-5 mb-2">Equipo instalado</h4>
  <div class="grid grid-cols-2 gap-3">${r('Serie GO9',s.serie)}${r('IMEI cámara',s.imei)}${r('SIM',s.sim)}${r('Arnés',s.arnes)}${r('Marca',s.marca)}${r('Modelo',s.modelo)}${r('Placas',s.placas)}${r('VIN',s.vin)}</div>
+ <div class="flex items-center justify-between mt-5 mb-2"><h4 class="text-xs font-bold uppercase text-slate-500">Partes eléctricas funcionando</h4>${me&&me.rol==='coord'&&s.estatus==='Completado'?`<button data-f="${E(s.folio)}" onclick="editarPE(this.dataset.f)" class="text-xs font-bold text-brandOrange"><i class="fa-solid fa-pen mr-1"></i>Editar</button>`:''}</div>
+ ${peSolo(s.partesElectricas)}
+ ${s.obsElectricas?`<div class="mt-2">${r('Observaciones eléctricas',s.obsElectricas)}</div>`:''}
  ${s.comentario?`<div class="mt-3">${r('Comentario del técnico',s.comentario)}</div>`:''}
  ${s.urlDoc?`<a href="${E(s.urlDoc)}" download class="mt-5 block text-center py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg">Descargar PDF</a>`:''}`);
 }
+// El coordinador corrige las partes eléctricas de un servicio ya capturado
+function editarPE(f){
+ const s=servicios.find(x=>x.folio===f);if(!s)return;
+ abrirModal(`<div class="flex justify-between items-start mb-3"><div><div class="text-xs text-slate-400">Editar partes eléctricas</div><h3 class="text-lg font-black">${E(f)}</h3></div><button onclick="cerrarModal()" class="text-slate-400 text-2xl leading-none" aria-label="Cerrar">&times;</button></div>
+ <form onsubmit="guardarPE(event,this.dataset.f)" data-f="${E(f)}" class="space-y-3">
+  ${peTabla('mod_',s.partesElectricas)}
+  <div><label class="lbl">Observaciones</label><textarea id="mod-obs" rows="3" class="inp">${E(s.obsElectricas||'')}</textarea></div>
+  <div class="flex gap-2"><button class="flex-1 py-2.5 bg-brandOrange text-white font-bold rounded-lg">Guardar cambios</button><button type="button" onclick="cerrarModal()" class="px-4 border rounded-lg">Cancelar</button></div>
+ </form>`);
+}
+async function guardarPE(e,f){
+ e.preventDefault();
+ const d=await enviar('/api/servicios/'+encodeURIComponent(f)+'/partes-electricas',{partesElectricas:peValores('mod_'),observaciones:$('mod-obs').value},'PUT');
+ if(!d.exito)return toast(d.error,1);
+ cerrarModal();toast('Partes eléctricas actualizadas');cargarServicios();
+}
 function exportar(){
- const rows=filtrados().map(s=>({'Folio acuerdo':s.folio,'Fecha':s.fecha,'Hora':s.hora,'Motivo':s.motivo,'Cliente':s.cliente,'Razón social':s.razon,'Lugar de atención':s.lugar,'Ciudad':s.ciudad,'Estado':s.edo,'Técnico':s.tecnico,'Estatus':s.estatus,'Serie GO9':s.serie||'','IMEI cámara':s.imei||'','SIM':s.sim||'','Arnés':s.arnes||'','Marca':s.marca||'','Modelo':s.modelo||'','VIN':s.vin||'','Placas':s.placas||''}));
+ const rows=filtrados().map(s=>({'Folio acuerdo':s.folio,'Fecha':s.fecha,'Hora':s.hora,'Motivo':s.motivo,'Cliente':s.cliente,'Razón social':s.razon,'Lugar de atención':s.lugar,'Ciudad':s.ciudad,'Estado':s.edo,'Técnico':s.tecnico,'Estatus':s.estatus,'Serie GO9':s.serie||'','IMEI cámara':s.imei||'','SIM':s.sim||'','Arnés':s.arnes||'','Marca':s.marca||'','Modelo':s.modelo||'','VIN':s.vin||'','Placas':s.placas||'',...Object.fromEntries(PE.map((c,i)=>['Eléctrico: '+c,PE_L[(s.partesElectricas&&s.partesElectricas[i]||{}).v]||''])),'Obs. eléctricas':s.obsElectricas||''}));
  if(!rows.length)return toast('No hay servicios para exportar',1);
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Servicios');
  XLSX.writeFile(wb,'servicios_'+new Date().toISOString().slice(0,10)+'.xlsx');
